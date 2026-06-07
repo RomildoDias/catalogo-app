@@ -1,0 +1,188 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+  padding-bottom: 80px;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header {
+  background: #2d7a52;
+  color: #fff;
+  padding: 24px 0 16px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+#logo {
+  max-height: 64px;
+  margin-bottom: 8px;
+}
+
+#buscador {
+  margin: 16px 0;
+}
+
+#buscador input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#buscador input:focus {
+  border-color: #2d7a52;
+}
+
+#categorias {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+#categorias button {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+#categorias button.ativa {
+  background: #2d7a52;
+  color: #fff;
+  border-color: #2d7a52;
+}
+
+#watermark {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+  margin: 8px 0 16px;
+}
+
+#produtos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.produto-card {
+  display: flex;
+  gap: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.produto-foto {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.produto-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.produto-nome {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.produto-descricao {
+  font-size: 0.8125rem;
+  color: #666;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.produto-preco {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #2d7a52;
+  margin-top: auto;
+}
+
+.produto-badge {
+  display: inline-block;
+  background: #ff6b35;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.btn-whatsapp {
+  display: block;
+  text-align: center;
+  background: #25d366;
+  color: #fff;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.btn-whatsapp:hover {
+  opacity: 0.9;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 0 16px;
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+
+.carregando {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+}
+
+.erro {
+  text-align: center;
+  padding: 40px 0;
+  color: #e74c3c;
+}

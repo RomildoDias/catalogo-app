@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carregando...</title>
+  <link rel="stylesheet" href="catalogo.css">
+</head>
+<body>
+  <header id="topo">
+    <div class="container">
+      <img id="logo" src="" alt="Logo" style="display:none">
+      <h1 id="loja-nome">Carregando...</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="buscador">
+      <input type="text" id="busca" placeholder="Buscar produtos..." oninput="filtrar()">
+    </section>
+
+    <nav id="categorias"></nav>
+
+    <section id="watermark" style="display:none">
+      <p>Catálogo gratuito · CatálogoApp</p>
+    </section>
+
+    <section id="produtos"></section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <a id="whatsapp-btn" href="#" target="_blank" class="btn-whatsapp">
+        Fale conosco pelo WhatsApp
+      </a>
+    </div>
+  </footer>
+
+  <script src="catalogo.js"></script>
+</body>
+</html>
