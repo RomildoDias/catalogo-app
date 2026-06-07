@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalogo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -27,13 +32,19 @@ services:
       SUPERADMIN_EMAIL: admin@catalogo.app
       SUPERADMIN_PASSWORD: admin123
       FRONTEND_URL: http://localhost:5173
+    volumes:
+      - ./backend:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   frontend-painel:
     build: ./frontend/painel
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend/painel:/app
+      - /app/node_modules
     depends_on:
       - backend
 

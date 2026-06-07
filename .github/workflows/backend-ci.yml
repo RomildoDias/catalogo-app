@@ -1,0 +1,72 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: catalogo
+          POSTGRES_PASSWORD: catalogo_pass
+          POSTGRES_DB: catalogo_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://catalogo:catalogo_pass@localhost:5432/catalogo_app
+          SECRET_KEY: test-secret-key
+          SUPERADMIN_EMAIL: admin@catalogo.app
+          SUPERADMIN_PASSWORD: admin123
+        run: |
+          pytest -v --tb=short
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint deps
+        run: pip install ruff
+
+      - name: Run ruff
+        working-directory: ./backend
+        run: ruff check . --ignore=E501,F401 --exit-zero

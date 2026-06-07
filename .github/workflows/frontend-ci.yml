@@ -1,0 +1,31 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "frontend/painel/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - "frontend/painel/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: ./frontend/painel
+        run: npm ci
+
+      - name: Build
+        working-directory: ./frontend/painel
+        run: npm run build
