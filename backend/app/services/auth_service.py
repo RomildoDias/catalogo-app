@@ -44,8 +44,7 @@ async def criar_lojista(dados: LojistaCreate, session: AsyncSession) -> Lojista:
     slug_base = gerar_slug(dados.nome)
     slug = await slug_unica(slug_base, session)
 
-    # Senha padrão para primeiro acesso
-    senha_hash = hash_senha("senha123")
+    senha_hash = hash_senha(dados.senha)
 
     lojista = Lojista(
         nome=dados.nome,

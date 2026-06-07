@@ -22,5 +22,10 @@ class CategoriaResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ItemOrdem(BaseModel):
+    id: str
+    ordem: int = 0
+
+
 class OrdemUpdate(BaseModel):
-    itens: list[dict]  # [{"id": "uuid", "ordem": 0}]
+    itens: list[ItemOrdem]

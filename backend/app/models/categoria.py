@@ -15,7 +15,7 @@ class Categoria(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     lojista_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lojistas.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("lojistas.id", ondelete="CASCADE"), nullable=False, index=True
     )
     nome: Mapped[str] = mapped_column(String(80), nullable=False)
     ordem: Mapped[int] = mapped_column(Integer, default=0)

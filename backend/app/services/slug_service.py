@@ -17,6 +17,7 @@ def gerar_slug(nome: str) -> str:
 
 
 async def slug_unica(slug_base: str, session: AsyncSession) -> str:
+    from sqlalchemy.exc import IntegrityError
     slug = slug_base
     sufixo = 0
     while True:

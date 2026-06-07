@@ -11,6 +11,16 @@ export default function Produtos() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ nome: "", descricao: "", preco: "", badge: "", categoria_id: "" });
   const [editId, setEditId] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [currentFoto, setCurrentFoto] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+
+  const showFeedback = (msg, tipo) => {
+    setFeedback({ msg, tipo });
+    setTimeout(() => setFeedback(null), 4000);
+  };
 
   const carregar = async () => {
     try {
@@ -18,7 +28,7 @@ export default function Produtos() {
       setProdutos(p);
       setCategorias(c);
     } catch (e) {
-      alert(e.message);
+      showFeedback(e.message, "erro");
     } finally {
       setLoading(false);
     }
@@ -29,6 +39,10 @@ export default function Produtos() {
   const abrirCriar = () => {
     setForm({ nome: "", descricao: "", preco: "", badge: "", categoria_id: "" });
     setEditId(null);
+    setCurrentFoto(null);
+    setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
     setModal("produto");
   };
 
@@ -41,7 +55,19 @@ export default function Produtos() {
       categoria_id: p.categoria_id || "",
     });
     setEditId(p.id);
+    setCurrentFoto(p.foto_url || null);
+    setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
     setModal("produto");
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const salvar = async (e) => {
@@ -49,17 +75,58 @@ export default function Produtos() {
     try {
       const dados = { ...form };
       if (!dados.categoria_id) dados.categoria_id = null;
-      if (dados.preco) dados.preco = parseFloat(dados.preco.replace(",", "."));
-      else dados.preco = null;
+      dados.preco = formatarPrecoParaEnvio(dados.preco);
+      let produto;
       if (editId) {
         await api.produtos.atualizar(editId, dados);
+        produto = { id: editId };
       } else {
-        await api.produtos.criar(dados);
+        produto = await api.produtos.criar(dados);
+      }
+      if (selectedFile) {
+        setUploading(true);
+        try {
+          const result = await api.produtos.uploadFoto(produto.id, selectedFile);
+          setCurrentFoto(result.foto_url);
+        } catch (err) {
+          showFeedback("Produto criado, mas erro ao enviar foto: " + err.message, "erro");
+        } finally {
+          setUploading(false);
+        }
       }
       setModal(null);
+      showFeedback(editId ? "Produto atualizado" : "Produto criado", "sucesso");
       carregar();
     } catch (e) {
-      alert(e.message);
+      showFeedback(e.message, "erro");
+    }
+  };
+
+  const handleFotoReplace = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editId) return;
+    setUploading(true);
+    try {
+      const result = await api.produtos.uploadFoto(editId, file);
+      setCurrentFoto(result.foto_url);
+      showFeedback("Foto atualizada", "sucesso");
+      carregar();
+    } catch (e) {
+      showFeedback(e.message, "erro");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removerFoto = async () => {
+    if (!editId) return;
+    try {
+      await api.produtos.removerFoto(editId);
+      setCurrentFoto(null);
+      showFeedback("Foto removida", "sucesso");
+      carregar();
+    } catch (e) {
+      showFeedback(e.message, "erro");
     }
   };
 
@@ -67,9 +134,10 @@ export default function Produtos() {
     if (!confirm("Remover produto?")) return;
     try {
       await api.produtos.deletar(id);
+      showFeedback("Produto removido", "sucesso");
       carregar();
     } catch (e) {
-      alert(e.message);
+      showFeedback(e.message, "erro");
     }
   };
 
@@ -78,17 +146,30 @@ export default function Produtos() {
       await api.produtos.toggleAtivo(id);
       carregar();
     } catch (e) {
-      alert(e.message);
+      showFeedback(e.message, "erro");
     }
   };
 
+  function formatarPrecoParaEnvio(valor) {
+    if (!valor) return null;
+    var v = String(valor).replace(/\./g, "").replace(",", ".");
+    return parseFloat(v);
+  }
+
   const maxProdutos = user?.plano === "gratuito" ? 20 : Infinity;
   const ativosCount = produtos.filter((p) => p.ativo).length;
+
+  const imagemPreview = previewUrl || currentFoto;
 
   if (loading) return <Layout><p>Carregando...</p></Layout>;
 
   return (
     <Layout>
+      {feedback && (
+        <div className={"mb-4 px-4 py-2 rounded-md text-sm " + (feedback.tipo === "erro" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>
+          {feedback.msg}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Produtos</h2>
@@ -99,7 +180,7 @@ export default function Produtos() {
         <button
           onClick={abrirCriar}
           disabled={user?.plano === "gratuito" && ativosCount >= 20}
-          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
         >
           Novo Produto
         </button>
@@ -170,7 +251,7 @@ export default function Produtos() {
                   required
                   value={form.nome}
                   onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -178,7 +259,7 @@ export default function Produtos() {
                 <textarea
                   value={form.descricao}
                   onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
@@ -190,7 +271,7 @@ export default function Produtos() {
                     value={form.preco}
                     onChange={(e) => setForm({ ...form, preco: e.target.value })}
                     placeholder="0,00"
-                    className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex-1">
@@ -198,7 +279,7 @@ export default function Produtos() {
                   <select
                     value={form.badge}
                     onChange={(e) => setForm({ ...form, badge: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Nenhum</option>
                     <option value="Novo">Novo</option>
@@ -212,7 +293,7 @@ export default function Produtos() {
                 <select
                   value={form.categoria_id}
                   onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Sem categoria</option>
                   {categorias.map((c) => (
@@ -220,12 +301,36 @@ export default function Produtos() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Foto do Produto</label>
+                {imagemPreview ? (
+                  <div className="flex items-center gap-3">
+                    <img src={imagemPreview} alt="" className="w-16 h-16 rounded-md object-cover border" />
+                    <div className="flex flex-col gap-1">
+                      {editId && (
+                        <button type="button" onClick={removerFoto} disabled={uploading} className="text-xs text-red-600 hover:text-red-800">
+                          Remover foto
+                        </button>
+                      )}
+                      <label className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer">
+                        {editId ? "Trocar foto" : "Trocar"}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileSelect} hidden />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="block w-full border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-blue-500 text-sm text-gray-500">
+                    {uploading ? "Enviando..." : "Clique para selecionar foto"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileSelect} hidden />
+                  </label>
+                )}
+              </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                <button type="button" onClick={() => { if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); setModal(null); }} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
                   Cancelar
                 </button>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700">
-                  {editId ? "Salvar" : "Criar"}
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">
+                  {uploading ? "Enviando foto..." : editId ? "Salvar" : "Criar"}
                 </button>
               </div>
             </form>

@@ -55,7 +55,7 @@ export default function Categorias() {
         <h2 className="text-xl font-semibold text-gray-800">Categorias</h2>
         <button
           onClick={abrirCriar}
-          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
         >
           Nova Categoria
         </button>
@@ -97,14 +97,14 @@ export default function Categorias() {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder="Nome da categoria"
-                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-gray-600">
                   Cancelar
                 </button>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700">
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">
                   {editId ? "Salvar" : "Criar"}
                 </button>
               </div>

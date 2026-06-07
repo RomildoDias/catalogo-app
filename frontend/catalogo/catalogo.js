@@ -1,6 +1,23 @@
 let dadosLoja = null;
 let categoriaAtiva = null;
 
+// Tema escuro
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  var el = document.getElementById("theme-toggle");
+  el.textContent = document.body.classList.contains("dark") ? "\u2600\uFE0F Tema claro" : "\u{1F319} Tema escuro";
+  localStorage.setItem("tema", document.body.classList.contains("dark") ? "escuro" : "claro");
+}
+
+function initTheme() {
+  var salvo = localStorage.getItem("tema");
+  var prefereEscuro = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (salvo === "escuro" || (!salvo && prefereEscuro)) {
+    document.body.classList.add("dark");
+    document.getElementById("theme-toggle").textContent = "\u2600\uFE0F Tema claro";
+  }
+}
+
 function getSlug() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("slug")) return params.get("slug");
@@ -28,7 +45,11 @@ async function carregarLoja() {
   const produtosEl = document.getElementById("produtos");
   produtosEl.innerHTML = '<p class="carregando">Carregando...</p>';
   if (!slug) {
-    produtosEl.innerHTML = '<p class="erro">Use /catalogo/?slug=nome-da-loja</p>';
+    var msg = document.createElement("p");
+    msg.className = "erro";
+    msg.textContent = "Use /catalogo/?slug=nome-da-loja";
+    produtosEl.innerHTML = "";
+    produtosEl.appendChild(msg);
     return;
   }
   try {
@@ -37,7 +58,11 @@ async function carregarLoja() {
     dadosLoja = await res.json();
     renderizar();
   } catch (err) {
-    produtosEl.innerHTML = '<p class="erro">' + err.message + "</p>";
+    produtosEl.innerHTML = "";
+    var msg = document.createElement("p");
+    msg.className = "erro";
+    msg.textContent = err.message;
+    produtosEl.appendChild(msg);
     document.getElementById("loja-nome").textContent = "Loja n\u00e3o encontrada";
   }
 }
@@ -65,9 +90,27 @@ function renderizar() {
     "; }";
   document.head.appendChild(style);
   var watermark = document.getElementById("watermark");
-  watermark.style.display = loja.plano === "gratuito" ? "block" : "none";
+  watermark.style.display = loja.exibir_watermark ? "block" : "none";
   var wppBtn = document.getElementById("whatsapp-btn");
   wppBtn.href = "https://wa.me/55" + limparTelefone(loja.whatsapp);
+  // Links sociais
+  var socialEl = document.getElementById("social-links");
+  socialEl.innerHTML = "";
+  var links = [
+    { url: loja.instagram_url, label: "Instagram", icon: "\ud83d\udcf7" },
+    { url: loja.mercado_livre_url, label: "Mercado Livre", icon: "\ud83d\uded2" },
+  ];
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].url) {
+      var a = document.createElement("a");
+      a.href = links[i].url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.className = "social-link";
+      a.textContent = links[i].icon + " " + links[i].label;
+      socialEl.appendChild(a);
+    }
+  }
   var catNav = document.getElementById("categorias");
   catNav.innerHTML = "";
   var todasBtn = document.createElement("button");
@@ -120,8 +163,10 @@ function filtrar() {
     });
   }
   if (produtos.length === 0) {
-    produtosEl.innerHTML =
-      '<p style="text-align:center;padding:40px 0;color:#999">Nenhum produto encontrado</p>';
+    var msg = document.createElement("p");
+    msg.style.cssText = "text-align:center;padding:40px 0;color:#999";
+    msg.textContent = "Nenhum produto encontrado";
+    produtosEl.appendChild(msg);
     return;
   }
   var wpp = limparTelefone(dadosLoja.whatsapp);
@@ -129,36 +174,146 @@ function filtrar() {
     var p = produtos[i];
     var card = document.createElement("div");
     card.className = "produto-card";
-    var html = "";
+
+    var fotoWrap = document.createElement("div");
+    fotoWrap.className = "produto-foto-wrap";
     if (p.foto_url) {
-      html +=
-        '<img class="produto-foto" src="' +
-        p.foto_url +
-        '" alt="' +
-        p.nome +
-        '" loading="lazy">';
+      var img = document.createElement("img");
+      img.className = "produto-foto";
+      img.src = p.foto_url;
+      img.alt = "";
+      img.loading = "lazy";
+      fotoWrap.appendChild(img);
+    } else {
+      var plc = document.createElement("div");
+      plc.className = "produto-foto-placeholder";
+      plc.textContent = "\ud83d\udce6";
+      fotoWrap.appendChild(plc);
     }
-    html += '<div class="produto-info">';
+    card.appendChild(fotoWrap);
+
+    var info = document.createElement("div");
+    info.className = "produto-info";
+
     if (p.badge) {
-      html += '<span class="produto-badge">' + p.badge + "</span>";
+      var badge = document.createElement("span");
+      badge.className = "produto-badge";
+      badge.textContent = p.badge;
+      info.appendChild(badge);
     }
-    html += '<div class="produto-nome">' + p.nome + "</div>";
+
+    var nome = document.createElement("div");
+    nome.className = "produto-nome";
+    nome.textContent = p.nome;
+    info.appendChild(nome);
+
     if (p.descricao) {
-      html += '<div class="produto-descricao">' + p.descricao + "</div>";
+      var desc = document.createElement("div");
+      desc.className = "produto-descricao";
+      desc.textContent = p.descricao;
+      info.appendChild(desc);
     }
+
     if (p.preco != null) {
-      html += '<div class="produto-preco">' + formatarPreco(p.preco) + "</div>";
+      var preco = document.createElement("div");
+      preco.className = "produto-preco";
+      preco.textContent = formatarPreco(p.preco);
+      info.appendChild(preco);
     }
-    html +=
-      '<a class="btn-whatsapp" href="https://wa.me/55' +
-      wpp +
-      "?text=" +
-      mensagemWhatsApp(p) +
-      '" target="_blank" style="margin-top:8px;font-size:0.8125rem;padding:8px;text-decoration:none;color:#fff;background:#25d366;border-radius:6px;display:inline-block;text-align:center">Comprar via WhatsApp</a>';
-    html += "</div>";
-    card.innerHTML = html;
+
+    var wppLink = document.createElement("a");
+    wppLink.className = "btn-whatsapp";
+    wppLink.href = "https://wa.me/55" + wpp + "?text=" + mensagemWhatsApp(p);
+    wppLink.target = "_blank";
+    wppLink.style.cssText = "margin-top:8px;font-size:0.8125rem;padding:8px;text-decoration:none;color:#fff;background:#25d366;border-radius:6px;display:inline-block;text-align:center";
+    wppLink.textContent = "Comprar via WhatsApp";
+    info.appendChild(wppLink);
+
+    var detalhes = document.createElement("div");
+    detalhes.className = "produto-detalhes";
+    detalhes.textContent = "Detalhes \u2192";
+    detalhes.onclick = (function(idx) {
+      return function() { abrirDetalhes(idx); };
+    })(i);
+    info.appendChild(detalhes);
+
+    card.appendChild(info);
     produtosEl.appendChild(card);
   }
 }
 
+var produtoAtivo = null;
+
+function abrirDetalhes(index) {
+  produtoAtivo = dadosLoja.produtos[index];
+  if (!produtoAtivo) return;
+  var body = document.getElementById("modal-body");
+  body.innerHTML = "";
+  var wpp = limparTelefone(dadosLoja.whatsapp);
+
+  var fotoWrap = document.createElement("div");
+  fotoWrap.className = "modal-foto-wrap";
+  if (produtoAtivo.foto_url) {
+    var img = document.createElement("img");
+    img.className = "modal-foto";
+    img.src = produtoAtivo.foto_url;
+    img.alt = "";
+    img.loading = "lazy";
+    fotoWrap.appendChild(img);
+  } else {
+    var plc = document.createElement("div");
+    plc.className = "modal-foto-placeholder";
+    plc.textContent = "\ud83d\udce6";
+    fotoWrap.appendChild(plc);
+  }
+  body.appendChild(fotoWrap);
+
+  if (produtoAtivo.badge) {
+    var badge = document.createElement("span");
+    badge.className = "modal-badge";
+    badge.textContent = produtoAtivo.badge;
+    body.appendChild(badge);
+  }
+
+  var nome = document.createElement("h2");
+  nome.className = "modal-nome";
+  nome.textContent = produtoAtivo.nome;
+  body.appendChild(nome);
+
+  if (produtoAtivo.descricao) {
+    var desc = document.createElement("p");
+    desc.className = "modal-descricao";
+    desc.textContent = produtoAtivo.descricao;
+    body.appendChild(desc);
+  }
+
+  if (produtoAtivo.preco != null) {
+    var preco = document.createElement("div");
+    preco.className = "modal-preco";
+    preco.textContent = formatarPreco(produtoAtivo.preco);
+    body.appendChild(preco);
+  }
+
+  var wppLink = document.createElement("a");
+  wppLink.className = "btn-whatsapp";
+  wppLink.href = "https://wa.me/55" + wpp + "?text=" + mensagemWhatsApp(produtoAtivo);
+  wppLink.target = "_blank";
+  wppLink.textContent = "Comprar via WhatsApp";
+  body.appendChild(wppLink);
+
+  document.getElementById("modal-detalhes").style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function fecharDetalhes(event) {
+  if (event && event.target !== document.getElementById("modal-detalhes")) return;
+  document.getElementById("modal-detalhes").style.display = "none";
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") fecharDetalhes({ target: document.getElementById("modal-detalhes") });
+});
+
+initTheme();
 carregarLoja();

@@ -10,6 +10,7 @@ async def test_register(client: AsyncClient):
             "nome": "Nova Loja",
             "email": "nova@loja.com",
             "whatsapp": "11988887777",
+            "senha": "minha-senha-123",
         },
     )
     assert res.status_code == 201
@@ -25,10 +26,11 @@ async def test_register_duplicate_email(client: AsyncClient):
         "nome": "Loja Um",
         "email": "dup@loja.com",
         "whatsapp": "11988887777",
+        "senha": "minha-senha-123",
     }
     await client.post("/auth/register", json=payload)
     res = await client.post("/auth/register", json=payload)
-    assert res.status_code == 500  # unique constraint
+    assert res.status_code == 409  # unique constraint
 
 
 @pytest.mark.asyncio
@@ -39,11 +41,12 @@ async def test_login(client: AsyncClient):
             "nome": "Loja Login",
             "email": "login@loja.com",
             "whatsapp": "11988887777",
+            "senha": "minha-senha-123",
         },
     )
     res = await client.post(
         "/auth/login",
-        json={"email": "login@loja.com", "senha": "senha123"},
+        json={"email": "login@loja.com", "senha": "minha-senha-123"},
     )
     assert res.status_code == 200
     data = res.json()
@@ -59,6 +62,7 @@ async def test_login_wrong_password(client: AsyncClient):
             "nome": "Loja WP",
             "email": "wp@loja.com",
             "whatsapp": "11988887777",
+            "senha": "minha-senha-123",
         },
     )
     res = await client.post(

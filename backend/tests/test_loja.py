@@ -17,6 +17,7 @@ async def test_loja_publica(client: AsyncClient):
             "nome": "Loja Pública",
             "email": "publica@test.com",
             "whatsapp": "11988887777",
+            "senha": "minha-senha-123",
         },
     )
     token = res.json()["access_token"]

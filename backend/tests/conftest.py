@@ -1,4 +1,6 @@
 import asyncio
+import os
+import tempfile
 from typing import AsyncGenerator
 
 import pytest
@@ -9,8 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.database import Base, get_db
 from app.main import app
 
-# Usa SQLite em memória para testes (mais rápido que PostgreSQL)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+DB_PATH = _db_file.name
+_db_file.close()
+
+TEST_DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 test_async_session = async_sessionmaker(
@@ -27,7 +32,6 @@ def event_loop():
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
-    """Cria as tabelas antes de cada teste e limpa depois."""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -35,10 +39,28 @@ async def setup_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
+def cleanup():
+    if os.path.exists(DB_PATH):
+        try:
+            os.unlink(DB_PATH)
+        except PermissionError:
+            pass
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def _cleanup():
+    yield
+    await test_engine.dispose()
+    cleanup()
+
+
 async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
     async with test_async_session() as session:
         try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 
@@ -61,22 +83,20 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 async def token_lojista(client: AsyncClient) -> str:
-    """Registra um lojista e retorna o token JWT."""
     res = await client.post(
         "/auth/register",
         json={
             "nome": "Lojista Teste",
             "email": "teste@lojista.com",
             "whatsapp": "11988887777",
+            "senha": "minha-senha-123",
         },
     )
-    data = res.json()
-    return data["access_token"]
+    return res.json()["access_token"]
 
 
 @pytest_asyncio.fixture
 async def token_superadmin(client: AsyncClient, session: AsyncSession) -> str:
-    """Cria superadmin e retorna token."""
     from app.models.lojista import Lojista
     from app.services.auth_service import criar_token, hash_senha
 
@@ -90,4 +110,4 @@ async def token_superadmin(client: AsyncClient, session: AsyncSession) -> str:
     )
     session.add(lojista)
     await session.commit()
-    return criar_token(str(lojista.id), role="lojista")
+    return criar_token(str(lojista.id), role="admin")

@@ -1,3 +1,47 @@
+:root {
+  --bg: #f5f5f5;
+  --bg-card: #fff;
+  --bg-input: #fff;
+  --bg-footer: #f5f5f5;
+  --bg-placeholder: #e8e8e8;
+  --bg-modal: #fff;
+  --bg-hover: #e8f4fd;
+  --text: #333;
+  --text-secondary: #666;
+  --text-watermark: #999;
+  --text-carregando: #999;
+  --border: #ddd;
+  --border-footer: #e0e0e0;
+  --shadow: rgba(0,0,0,0.08);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+  --btn-categoria-bg: #fff;
+  --social-hover-color: #0077b6;
+  --toggle-bg: #ddd;
+  --toggle-icon: #555;
+}
+
+body.dark {
+  --bg: #121212;
+  --bg-card: #1e1e1e;
+  --bg-input: #2a2a2a;
+  --bg-footer: #121212;
+  --bg-placeholder: #2a2a2a;
+  --bg-modal: #1e1e1e;
+  --bg-hover: #1a2a3a;
+  --text: #e0e0e0;
+  --text-secondary: #aaa;
+  --text-watermark: #666;
+  --text-carregando: #666;
+  --border: #333;
+  --border-footer: #222;
+  --shadow: rgba(0,0,0,0.3);
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+  --btn-categoria-bg: #2a2a2a;
+  --social-hover-color: #4da6e0;
+  --toggle-bg: #444;
+  --toggle-icon: #ffd700;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -6,10 +50,11 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f5f5f5;
-  color: #333;
+  background: var(--bg);
+  color: var(--text);
   line-height: 1.6;
   padding-bottom: 80px;
+  transition: background 0.3s, color 0.3s;
 }
 
 .container {
@@ -19,7 +64,7 @@ body {
 }
 
 header {
-  background: #2d7a52;
+  background: #0077b6;
   color: #fff;
   padding: 24px 0 16px;
   text-align: center;
@@ -42,15 +87,17 @@ header h1 {
 #buscador input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  background: var(--bg-input);
+  color: var(--text);
+  transition: border-color 0.2s, background 0.3s, color 0.3s;
 }
 
 #buscador input:focus {
-  border-color: #2d7a52;
+  border-color: #0077b6;
 }
 
 #categorias {
@@ -66,24 +113,25 @@ header h1 {
   flex-shrink: 0;
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--btn-categoria-bg);
+  color: var(--text);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s, background 0.3s, color 0.3s;
   white-space: nowrap;
 }
 
 #categorias button.ativa {
-  background: #2d7a52;
+  background: #0077b6;
   color: #fff;
-  border-color: #2d7a52;
+  border-color: #0077b6;
 }
 
 #watermark {
   text-align: center;
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-watermark);
   margin: 8px 0 16px;
 }
 
@@ -96,10 +144,17 @@ header h1 {
 .produto-card {
   display: flex;
   gap: 12px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px var(--shadow);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.produto-foto-wrap {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
 }
 
 .produto-foto {
@@ -107,7 +162,18 @@ header h1 {
   height: 100px;
   object-fit: cover;
   border-radius: 8px;
-  flex-shrink: 0;
+}
+
+.produto-foto-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  background: var(--bg-placeholder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  transition: background 0.3s;
 }
 
 .produto-info {
@@ -124,17 +190,18 @@ header h1 {
 
 .produto-descricao {
   font-size: 0.8125rem;
-  color: #666;
+  color: var(--text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s;
 }
 
 .produto-preco {
   font-weight: 700;
   font-size: 1.125rem;
-  color: #2d7a52;
+  color: #0077b6;
   margin-top: auto;
 }
 
@@ -147,6 +214,34 @@ header h1 {
   padding: 2px 8px;
   border-radius: 4px;
   align-self: flex-start;
+}
+
+#social-links {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s, background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.social-link:hover {
+  border-color: var(--social-hover-color);
+  color: var(--social-hover-color);
 }
 
 .btn-whatsapp {
@@ -171,18 +266,167 @@ footer {
   left: 0;
   right: 0;
   padding: 8px 0 16px;
-  background: #f5f5f5;
-  border-top: 1px solid #e0e0e0;
+  background: var(--bg-footer);
+  border-top: 1px solid var(--border-footer);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.produto-detalhes {
+  font-size: 0.75rem;
+  color: #0077b6;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.produto-detalhes:hover {
+  background: var(--bg-hover);
+  text-decoration: underline;
+}
+
+/* Modal de detalhes */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s;
+  transition: background 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-modal);
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+  animation: slideUp 0.25s;
+  transition: background 0.3s;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-watermark);
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.3s;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+#modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-foto-wrap {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-placeholder);
+  transition: background 0.3s;
+}
+
+.modal-foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-foto-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+}
+
+.modal-badge {
+  display: inline-block;
+  background: #ff6b35;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.modal-nome {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.modal-descricao {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  transition: color 0.3s;
+}
+
+.modal-preco {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0077b6;
 }
 
 .carregando {
   text-align: center;
   padding: 40px 0;
-  color: #999;
+  color: var(--text-carregando);
 }
 
 .erro {
   text-align: center;
   padding: 40px 0;
   color: #e74c3c;
+}
+
+/* Toggle tema escuro */
+#theme-toggle {
+  display: inline-block !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border, #ddd) !important;
+  background: var(--bg-card, #fff) !important;
+  color: var(--text, #333) !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background 0.3s, color 0.3s, border-color 0.3s !important;
+}
+
+#theme-toggle:hover {
+  opacity: 0.8;
 }

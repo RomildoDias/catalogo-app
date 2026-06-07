@@ -5,7 +5,7 @@ import Layout from "../components/Layout";
 
 export default function Personalizacao() {
   const { user, login } = useAuth();
-  const [form, setForm] = useState({ nome: "", whatsapp: "", cor_primaria: "" });
+  const [form, setForm] = useState({ nome: "", whatsapp: "", cor_primaria: "", instagram_url: "", mercado_livre_url: "" });
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -15,6 +15,8 @@ export default function Personalizacao() {
         nome: user.nome || "",
         whatsapp: user.whatsapp || "",
         cor_primaria: user.cor_primaria || "#2d7a52",
+        instagram_url: user.instagram_url || "",
+        mercado_livre_url: user.mercado_livre_url || "",
       });
     }
   }, [user]);
@@ -47,7 +49,7 @@ export default function Personalizacao() {
               required
               value={form.nome}
               onChange={(e) => setForm({ ...form, nome: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -58,7 +60,7 @@ export default function Personalizacao() {
               value={form.whatsapp}
               onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
               placeholder="11999999999"
-              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-400 mt-1">Número com DDD, apenas dígitos</p>
           </div>
@@ -75,9 +77,29 @@ export default function Personalizacao() {
                 type="text"
                 value={form.cor_primaria}
                 onChange={(e) => setForm({ ...form, cor_primaria: e.target.value })}
-                className="flex-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+            <input
+              type="url"
+              value={form.instagram_url}
+              onChange={(e) => setForm({ ...form, instagram_url: e.target.value })}
+              placeholder="https://instagram.com/sua-loja"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mercado Livre</label>
+            <input
+              type="url"
+              value={form.mercado_livre_url}
+              onChange={(e) => setForm({ ...form, mercado_livre_url: e.target.value })}
+              placeholder="https://mercadolivre.com.br/perfil/sua-loja"
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
           <div className="flex items-center gap-4 pt-2">
             <p className="text-sm text-gray-500">
@@ -95,7 +117,7 @@ export default function Personalizacao() {
           <button
             type="submit"
             disabled={salvando}
-            className="bg-green-600 text-white px-6 py-2 rounded-md text-sm hover:bg-green-700 disabled:opacity-50"
+            className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
           >
             {salvando ? "Salvando..." : "Salvar"}
           </button>

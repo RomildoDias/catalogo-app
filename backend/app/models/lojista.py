@@ -21,6 +21,8 @@ class Lojista(Base):
     whatsapp: Mapped[str] = mapped_column(String(20), nullable=False)
     cor_primaria: Mapped[str] = mapped_column(String(7), default="#2d7a52")
     logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    instagram_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mercado_livre_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     plano: Mapped[str] = mapped_column(String(20), default="gratuito")
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(

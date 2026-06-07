@@ -1,18 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.lojista import Lojista
-from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, LojistaUpdate, TokenResponse
-from app.services.auth_service import autenticar, criar_lojista, criar_token
+from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, LojistaUpdate, SenhaAlterar, TokenResponse
+from app.services.auth_service import autenticar, criar_lojista, criar_token, hash_senha, verificar_senha
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(dados: LojistaCreate, session: AsyncSession = Depends(get_db)):
-    lojista = await criar_lojista(dados, session)
+    try:
+        lojista = await criar_lojista(dados, session)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email já cadastrado",
+        )
     token = criar_token(str(lojista.id))
     return TokenResponse(access_token=token, lojista=LojistaResponse.model_validate(lojista))
 
@@ -46,3 +54,16 @@ async def atualizar_perfil(
     await session.commit()
     await session.refresh(current_user)
     return LojistaResponse.model_validate(current_user)
+
+
+@router.post("/alterar-senha", status_code=status.HTTP_200_OK)
+async def alterar_senha(
+    dados: SenhaAlterar,
+    current_user: Lojista = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    if not verificar_senha(dados.senha_atual, current_user.senha_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Senha atual incorreta")
+    current_user.senha_hash = hash_senha(dados.nova_senha)
+    await session.commit()
+    return {"detail": "Senha alterada com sucesso"}

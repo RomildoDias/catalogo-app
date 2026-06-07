@@ -84,13 +84,13 @@ async def test_multi_tenancy(client: AsyncClient):
     # Registrar dois lojistas
     res1 = await client.post(
         "/auth/register",
-        json={"nome": "Loja A", "email": "a@test.com", "whatsapp": "111"},
+        json={"nome": "Loja A", "email": "a@test.com", "whatsapp": "111", "senha": "minha-senha-123"},
     )
     token_a = res1.json()["access_token"]
 
     res2 = await client.post(
         "/auth/register",
-        json={"nome": "Loja B", "email": "b@test.com", "whatsapp": "222"},
+        json={"nome": "Loja B", "email": "b@test.com", "whatsapp": "222", "senha": "minha-senha-123"},
     )
     token_b = res2.json()["access_token"]
 

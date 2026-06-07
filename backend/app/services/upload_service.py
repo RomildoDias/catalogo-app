@@ -1,42 +1,73 @@
-"""Service para upload de imagens via Cloudinary.
+import uuid
+from pathlib import Path
 
-Nota: Cloudinary SDK é síncrono. Em produção, considere rodar em
-thread separada com asyncio.to_thread para não bloquear o event loop.
-"""
+from fastapi import UploadFile, HTTPException, status
 
-from app.config import settings
-
-
-def upload_imagem(arquivo: bytes, public_id: str) -> str | None:
-    if not settings.cloudinary_cloud_name:
-        return None
-    try:
-        import cloudinary
-        import cloudinary.uploader
-
-        cloudinary.config(
-            cloud_name=settings.cloudinary_cloud_name,
-            api_key=settings.cloudinary_api_key,
-            api_secret=settings.cloudinary_api_secret,
-        )
-        result = cloudinary.uploader.upload(arquivo, public_id=public_id)
-        return result.get("secure_url")
-    except Exception:
-        return None
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
+ALLOWED_CONTENT_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MAGIC_BYTES = {
+    "image/jpeg": [b"\xff\xd8\xff", b"\xff\xd8\xff\xe0", b"\xff\xd8\xff\xe1"],
+    "image/png": [b"\x89PNG\r\n\x1a\n"],
+    "image/webp": [b"RIFF"],
+}
+MAX_SIZE = 5 * 1024 * 1024
 
 
-def deletar_imagem(public_id: str) -> None:
-    if not settings.cloudinary_cloud_name:
+def _validar_magic_bytes(data: bytes, content_type: str) -> bool:
+    magic_list = MAGIC_BYTES.get(content_type, [])
+    for magic in magic_list:
+        if data[:len(magic)] == magic:
+            return True
+    return False
+
+
+async def salvar_foto(lojista_id: uuid.UUID, produto_id: uuid.UUID, arquivo: UploadFile) -> str:
+    if arquivo.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Formato não permitido. Use JPG, PNG ou WebP.")
+
+    ext = ALLOWED_CONTENT_TYPES[arquivo.content_type]
+
+    # Lê apenas os primeiros bytes para checar magic + tamanho
+    HEADER_SIZE = 32
+    header = await arquivo.read(HEADER_SIZE)
+
+    if not _validar_magic_bytes(header, arquivo.content_type):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Conteúdo do arquivo não corresponde ao formato declarado.")
+
+    # Lê o resto do arquivo
+    data = header
+    remaining = await arquivo.read()
+    data += remaining
+
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Imagem deve ter no máximo 5MB.")
+
+    dir_path = UPLOAD_DIR / str(lojista_id)
+    dir_path.mkdir(parents=True, exist_ok=True)
+
+    # Remove fotos antigas do mesmo produto
+    for existing in dir_path.glob(f"{produto_id}.*"):
+        existing.unlink()
+
+    file_path = dir_path / f"{produto_id}.{ext}"
+    file_path.write_bytes(data)
+
+    return f"/uploads/{lojista_id}/{produto_id}.{ext}"
+
+
+def remover_foto(url: str | None):
+    if not url or not url.startswith("/uploads/"):
         return
-    try:
-        import cloudinary
-        import cloudinary.uploader
-
-        cloudinary.config(
-            cloud_name=settings.cloudinary_cloud_name,
-            api_key=settings.cloudinary_api_key,
-            api_secret=settings.cloudinary_api_secret,
-        )
-        cloudinary.uploader.destroy(public_id)
-    except Exception:
-        pass
+    relative = url[len("/uploads/"):]
+    # Sanitiza path traversal
+    relative = relative.lstrip("/").replace("\\", "/")
+    safe_path = relative.split("/")
+    if any(part in ("..", ".") or part == "" for part in safe_path):
+        return
+    file_path = UPLOAD_DIR / relative
+    # Verifica se o arquivo resolvido está dentro de UPLOAD_DIR
+    resolved = file_path.resolve()
+    if not str(resolved).startswith(str(UPLOAD_DIR.resolve())):
+        return
+    if resolved.exists():
+        resolved.unlink()

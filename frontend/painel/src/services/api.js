@@ -16,8 +16,14 @@ async function request(path, options = {}) {
 
   if (res.status === 204) return null;
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Erro na requisição");
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Resposta inválida do servidor (${res.status})`);
+  }
+  if (!res.ok) throw new Error(data?.detail || "Erro na requisição");
   return data;
 }
 
@@ -67,6 +73,28 @@ export const api = {
       request(`/produtos/${id}`, { method: "DELETE" }),
     toggleAtivo: (id) =>
       request(`/produtos/${id}/ativo`, { method: "PATCH" }),
+    uploadFoto: async (id, file) => {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("arquivo", file);
+      const res = await fetch(`/produtos/${id}/foto`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return;
+      }
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) throw new Error(data?.detail || "Erro no upload");
+      return data;
+    },
+    removerFoto: (id) =>
+      request(`/produtos/${id}/foto`, { method: "DELETE" }),
   },
 
   admin: {

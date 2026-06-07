@@ -1,10 +1,7 @@
 """Popula o banco com dados iniciais para desenvolvimento.
 
 Uso:
-    python -m backend.seed
-
-Ou via Docker:
-    docker-compose exec backend python -m backend.seed
+    python -m seed
 """
 
 import asyncio
@@ -22,8 +19,10 @@ async def seed():
 
     async with async_session() as session:
         # Superadmin
+        from sqlalchemy import select
+
         result = await session.execute(
-            __import__("sqlalchemy").select(Lojista).where(Lojista.email == settings.superadmin_email)
+            select(Lojista).where(Lojista.email == settings.superadmin_email)
         )
         if not result.scalar_one_or_none():
             lojista = Lojista(
@@ -39,47 +38,93 @@ async def seed():
 
         # Lojista exemplo
         result = await session.execute(
-            __import__("sqlalchemy").select(Lojista).where(Lojista.email == "lojista@teste.com")
+            select(Lojista).where(Lojista.email == "lojista@aquario.com")
         )
         lojista = result.scalar_one_or_none()
         if not lojista:
-            slug = await slug_unica(gerar_slug("Pet Shop do João"), session)
+            slug = await slug_unica(gerar_slug("Aquário do João"), session)
             lojista = Lojista(
-                nome="Pet Shop do João",
-                email="lojista@teste.com",
+                nome="Aquário do João",
+                email="lojista@aquario.com",
                 senha_hash=hash_senha("senha123"),
                 slug=slug,
                 whatsapp="11988888888",
-                cor_primaria="#2d7a52",
+                cor_primaria="#0077b6",
+                instagram_url="https://www.instagram.com/aquario.do.joao",
+                mercado_livre_url="https://www.mercadolivre.com.br/perfil/aquario-do-joao",
                 plano="gratuito",
             )
             session.add(lojista)
             await session.flush()
-            print(f"Lojista criado: lojista@teste.com / senha123 (slug: {slug})")
+            print(f"Lojista criado: lojista@aquario.com / senha123 (slug: {slug})")
 
-            # Categorias
-            cats = ["Rações", "Brinquedos", "Higiene", "Acessórios"]
-            for i, nome in enumerate(cats):
-                cat = Categoria(nome=nome, lojista_id=lojista.id, ordem=i)
+            # Categorias e produtos de aquarismo
+            categorias_produtos = {
+                "Peixes Ornamentais": [
+                    ("Betta Splendens", 39.90, "Popular"),
+                    ("Guppy Trio", 24.90, None),
+                    ("Acará Bandeira", 49.90, None),
+                    ("Corydora Albina", 19.90, "Novo"),
+                    ("Tetra Neon", 9.90, "Popular"),
+                    ("Limpa Vidro (Otocinclus)", 14.90, None),
+                ],
+                "Aquários": [
+                    ("Aquário 30L c/ Kit", 199.90, "Oferta"),
+                    ("Aquário 60L c/ Filtro", 349.90, "Popular"),
+                    ("Aquário 120L Stand", 799.90, None),
+                    ("Mini Aquário 15L", 129.90, "Novo"),
+                ],
+                "Filtragem": [
+                    ("Filtro Interno 300L/h", 89.90, None),
+                    ("Filtro Hang-On 600L/h", 159.90, "Popular"),
+                    ("Esponja Biológica Média", 24.90, None),
+                    ("Mídia Cerâmica 1kg", 34.90, None),
+                    ("Bomba Submersa 800L/h", 119.90, None),
+                ],
+                "Iluminação": [
+                    ("LED RGB 60cm 12W", 149.90, "Novo"),
+                    ("LED Plantas 45cm 10W", 129.90, "Popular"),
+                    ("Lâmpada UV 9W", 69.90, None),
+                    ("Timer Digital", 39.90, None),
+                ],
+                "Decoração": [
+                    ("Substrato Marchas 5kg", 49.90, "Popular"),
+                    ("Areia Preta 3kg", 29.90, None),
+                    ("Tronco Natural M", 59.90, None),
+                    ("Pedra Rio 1kg", 19.90, None),
+                    ("Planta Artificial 30cm", 24.90, "Novo"),
+                ],
+                "Alimentação": [
+                    ("Ração Betta 50ml", 19.90, None),
+                    ("Ração Flocos Premium 100ml", 29.90, "Popular"),
+                    ("Ração Grânulos 150ml", 34.90, None),
+                    ("Comprimido Cascudo", 14.90, None),
+                    ("Bloodworm Liofilizado 20ml", 24.90, "Novo"),
+                ],
+                "Manutenção": [
+                    ("Kit Teste pH", 49.90, None),
+                    ("Condicionador 100ml", 29.90, "Popular"),
+                    ("Sifão Limpa Fundo", 39.90, None),
+                    ("Cepilho Algas", 14.90, None),
+                    ("Termostato 100W", 69.90, None),
+                ],
+            }
+
+            for ordem_cat, (cat_nome, produtos) in enumerate(categorias_produtos.items()):
+                cat = Categoria(nome=cat_nome, lojista_id=lojista.id, ordem=ordem_cat)
                 session.add(cat)
                 await session.flush()
 
-                # Produtos
-                produtos = [
-                    ("Ração Premium Cães 15kg", 159.90, "Oferta"),
-                    ("Ração Gatos Adultos 7kg", 89.90, "Popular"),
-                    ("Osso Natural Pet", 19.90, None),
-                    ("Shampoo Neutro 500ml", 34.90, "Novo"),
-                    ("Coleira Ajustável", 29.90, None),
-                ]
-                for j, (nome_prod, preco, badge) in enumerate(produtos[: i + 2]):
+                for ordem_prod, (nome_prod, preco, badge) in enumerate(produtos):
+                    ativo = ordem_prod < len(produtos) // 2 or ordem_prod == 0
                     prod = Produto(
                         lojista_id=lojista.id,
                         categoria_id=cat.id,
                         nome=nome_prod,
                         preco=preco,
                         badge=badge,
-                        ordem=j,
+                        ordem=ordem_prod,
+                        ativo=ativo,
                     )
                     session.add(prod)
 

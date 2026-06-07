@@ -55,7 +55,9 @@ async def dados_loja(slug: str, session: AsyncSession = Depends(get_db)):
         "whatsapp": lojista.whatsapp,
         "cor_primaria": lojista.cor_primaria,
         "logo_url": lojista.logo_url,
-        "plano": lojista.plano,
+        "instagram_url": lojista.instagram_url,
+        "mercado_livre_url": lojista.mercado_livre_url,
+        "exibir_watermark": lojista.plano == "gratuito",
         "categorias": categorias,
         "produtos": produtos,
     }

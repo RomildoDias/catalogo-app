@@ -8,6 +8,7 @@ class LojistaCreate(BaseModel):
     nome: str = Field(..., max_length=120)
     email: EmailStr
     whatsapp: str = Field(..., max_length=20)
+    senha: str = Field(..., min_length=6, max_length=128)
 
 
 class LojistaLogin(BaseModel):
@@ -23,6 +24,8 @@ class LojistaResponse(BaseModel):
     whatsapp: str
     cor_primaria: str
     logo_url: str | None
+    instagram_url: str | None = None
+    mercado_livre_url: str | None = None
     plano: str
     ativo: bool
     criado_em: datetime
@@ -36,9 +39,16 @@ class LojistaUpdate(BaseModel):
     whatsapp: str | None = Field(None, max_length=20)
     cor_primaria: str | None = Field(None, max_length=7)
     logo_url: str | None = None
+    instagram_url: str | None = None
+    mercado_livre_url: str | None = None
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     lojista: LojistaResponse
+
+
+class SenhaAlterar(BaseModel):
+    senha_atual: str
+    nova_senha: str = Field(..., min_length=6, max_length=128)

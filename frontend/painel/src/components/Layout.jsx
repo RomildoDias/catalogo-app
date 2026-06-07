@@ -2,8 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { path: "/", label: "Dashboard", icon: "📊" },
-  { path: "/produtos", label: "Produtos", icon: "📦" },
+  { path: "/", label: "Dashboard", icon: "🐟" },
+  { path: "/produtos", label: "Produtos", icon: "🪸" },
   { path: "/categorias", label: "Categorias", icon: "🏷️" },
   { path: "/personalizacao", label: "Personalizar", icon: "🎨" },
 ];
@@ -18,9 +18,9 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      <aside className="w-64 bg-white shadow-sm hidden md:flex flex-col">
-        <div className="p-4 border-b">
-          <h1 className="text-lg font-bold text-gray-800">CatálogoApp</h1>
+      <aside className="w-64 bg-slate-800 hidden md:flex flex-col">
+        <div className="p-4 border-b border-slate-700">
+          <h1 className="text-lg font-bold text-white">AquaCatálogo</h1>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => (
@@ -29,8 +29,8 @@ export default function Layout({ children }) {
               to={item.path}
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                 location.pathname === item.path
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-50"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-slate-300 hover:bg-slate-700"
               }`}
             >
               <span>{item.icon}</span>
@@ -44,8 +44,8 @@ export default function Layout({ children }) {
                 to={item.path}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
                   location.pathname === item.path
-                    ? "bg-green-50 text-green-700 font-medium"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-slate-300 hover:bg-slate-700"
                 }`}
               >
                 <span>{item.icon}</span>
@@ -53,11 +53,11 @@ export default function Layout({ children }) {
               </Link>
             ))}
         </nav>
-        <div className="p-4 border-t">
-          <p className="text-sm text-gray-600 truncate">{user?.nome}</p>
+        <div className="p-4 border-t border-slate-700">
+          <p className="text-sm text-slate-300 truncate">{user?.nome}</p>
           <button
             onClick={logout}
-            className="text-sm text-red-600 hover:text-red-800 mt-1"
+            className="text-sm text-red-400 hover:text-red-300 mt-1"
           >
             Sair
           </button>
@@ -66,14 +66,14 @@ export default function Layout({ children }) {
 
       {/* Mobile header */}
       <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow-sm md:hidden">
+        <header className="bg-slate-800 md:hidden">
           <div className="px-4 py-3 flex items-center justify-between">
-            <h1 className="text-lg font-bold text-gray-800">CatálogoApp</h1>
+            <h1 className="text-lg font-bold text-white">AquaCatálogo</h1>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">{user?.nome}</span>
+              <span className="text-sm text-slate-300">{user?.nome}</span>
               <button
                 onClick={logout}
-                className="text-sm text-red-600 hover:text-red-800"
+                className="text-sm text-red-400 hover:text-red-300"
               >
                 Sair
               </button>
@@ -86,8 +86,8 @@ export default function Layout({ children }) {
                 to={item.path}
                 className={`text-sm whitespace-nowrap px-3 py-1 rounded-full ${
                   location.pathname === item.path
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700"
+                    ? "bg-blue-500 text-white"
+                    : "bg-slate-600 text-slate-200"
                 }`}
               >
                 {item.label}
@@ -100,8 +100,8 @@ export default function Layout({ children }) {
                   to={item.path}
                   className={`text-sm whitespace-nowrap px-3 py-1 rounded-full ${
                     location.pathname === item.path
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-200 text-gray-700"
+                      ? "bg-blue-500 text-white"
+                      : "bg-slate-600 text-slate-200"
                   }`}
                 >
                   {item.label}

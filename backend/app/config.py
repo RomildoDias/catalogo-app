@@ -7,10 +7,6 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
 
-    cloudinary_cloud_name: str = ""
-    cloudinary_api_key: str = ""
-    cloudinary_api_secret: str = ""
-
     superadmin_email: str = "admin@catalogo.app"
     superadmin_password: str = "admin123"
     frontend_url: str = "http://localhost:5173"

@@ -96,13 +96,13 @@ async def reordenar(
 ):
     for item in dados.itens:
         try:
-            cat_id = uuid.UUID(item["id"])
+            cat_id = uuid.UUID(item.id)
         except (ValueError, KeyError):
             continue
         await session.execute(
             update(Categoria)
             .where(Categoria.id == cat_id, Categoria.lojista_id == current_user.id)
-            .values(ordem=item.get("ordem", 0))
+            .values(ordem=item.ordem)
         )
     await session.commit()
     return {"detail": "Ordem atualizada"}

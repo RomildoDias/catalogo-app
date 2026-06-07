@@ -40,11 +40,11 @@ export default function Admin() {
 
   return (
     <Layout>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Administração</h2>
+      <h2 className="text-xl font-semibold text-white mb-6">Administração</h2>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-slate-700 rounded-lg shadow-sm overflow-hidden border border-slate-600">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-slate-600 text-slate-200">
             <tr>
               <th className="text-left p-3 font-medium">Lojista</th>
               <th className="text-left p-3 font-medium hidden md:table-cell">Email</th>
@@ -53,19 +53,19 @@ export default function Admin() {
               <th className="text-right p-3 font-medium">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-slate-600">
             {lojistas.map((l) => (
-              <tr key={l.id} className="hover:bg-gray-50">
+              <tr key={l.id} className="hover:bg-slate-600">
                 <td className="p-3">
-                  <p className="font-medium text-gray-800">{l.nome}</p>
-                  <p className="text-xs text-gray-400">{l.slug}</p>
+                  <p className="font-medium text-white">{l.nome}</p>
+                  <p className="text-xs text-slate-400">{l.slug}</p>
                 </td>
-                <td className="p-3 text-gray-600 hidden md:table-cell">{l.email}</td>
+                <td className="p-3 text-slate-300 hidden md:table-cell">{l.email}</td>
                 <td className="p-3">
                   <select
                     value={l.plano}
                     onChange={(e) => alterarPlano(l.id, e.target.value)}
-                    className="border rounded px-2 py-1 text-xs"
+                    className="border rounded px-2 py-1 text-xs bg-slate-600 text-white border-slate-500"
                   >
                     <option value="gratuito">Gratuito</option>
                     <option value="pro">Pro</option>
@@ -87,8 +87,8 @@ export default function Admin() {
                     onClick={() => toggleAtivo(l.id)}
                     className={`text-xs px-3 py-1 rounded-full border ${
                       l.ativo
-                        ? "text-red-600 border-red-200 hover:bg-red-50"
-                        : "text-green-600 border-green-200 hover:bg-green-50"
+                        ? "text-red-400 border-red-500 hover:bg-red-700"
+                        : "text-green-400 border-green-500 hover:bg-green-700"
                     }`}
                   >
                     {l.ativo ? "Desativar" : "Ativar"}
@@ -99,7 +99,7 @@ export default function Admin() {
           </tbody>
         </table>
         {lojistas.length === 0 && (
-          <p className="p-6 text-gray-500 text-center">Nenhum lojista cadastrado</p>
+          <p className="p-6 text-slate-400 text-center">Nenhum lojista cadastrado</p>
         )}
       </div>
     </Layout>
