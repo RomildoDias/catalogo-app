@@ -14,6 +14,8 @@ async function request(path, options = {}) {
     return;
   }
 
+  if (res.status === 204) return null;
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Erro na requisição");
   return data;
@@ -28,6 +30,12 @@ export const api = {
 
   me: () => request("/auth/me"),
 
+  atualizarPerfil: (dados) =>
+    request("/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(dados),
+    }),
+
   categorias: {
     listar: () => request("/categorias/"),
     criar: (nome) =>
@@ -39,6 +47,11 @@ export const api = {
       }),
     deletar: (id) =>
       request(`/categorias/${id}`, { method: "DELETE" }),
+    reordenar: (itens) =>
+      request("/categorias/ordem", {
+        method: "PATCH",
+        body: JSON.stringify({ itens }),
+      }),
   },
 
   produtos: {
@@ -54,5 +67,16 @@ export const api = {
       request(`/produtos/${id}`, { method: "DELETE" }),
     toggleAtivo: (id) =>
       request(`/produtos/${id}/ativo`, { method: "PATCH" }),
+  },
+
+  admin: {
+    listarLojistas: () => request("/admin/lojistas"),
+    toggleAtivo: (id) =>
+      request(`/admin/lojistas/${id}/ativo`, { method: "PATCH" }),
+    alterarPlano: (id, plano) =>
+      request(`/admin/lojistas/${id}/plano`, {
+        method: "PATCH",
+        body: JSON.stringify({ plano }),
+      }),
   },
 };

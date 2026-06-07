@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.lojista import Lojista
-from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, TokenResponse
+from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, LojistaUpdate, TokenResponse
 from app.services.auth_service import autenticar, criar_lojista, criar_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -31,4 +31,18 @@ async def login(dados: LojistaLogin, session: AsyncSession = Depends(get_db)):
 
 @router.get("/me", response_model=LojistaResponse)
 async def me(current_user: Lojista = Depends(get_current_user)):
+    return LojistaResponse.model_validate(current_user)
+
+
+@router.put("/me", response_model=LojistaResponse)
+async def atualizar_perfil(
+    dados: LojistaUpdate,
+    current_user: Lojista = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    update_data = dados.model_dump(exclude_unset=True, exclude_none=True)
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+    await session.commit()
+    await session.refresh(current_user)
     return LojistaResponse.model_validate(current_user)

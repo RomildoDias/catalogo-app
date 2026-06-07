@@ -2,6 +2,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Produtos from "./pages/Produtos";
+import Categorias from "./pages/Categorias";
+import Personalizacao from "./pages/Personalizacao";
+import Admin from "./pages/Admin";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -15,11 +19,23 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route
         path="/"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
+        element={<PrivateRoute><Dashboard /></PrivateRoute>}
+      />
+      <Route
+        path="/produtos"
+        element={<PrivateRoute><Produtos /></PrivateRoute>}
+      />
+      <Route
+        path="/categorias"
+        element={<PrivateRoute><Categorias /></PrivateRoute>}
+      />
+      <Route
+        path="/personalizacao"
+        element={<PrivateRoute><Personalizacao /></PrivateRoute>}
+      />
+      <Route
+        path="/admin"
+        element={<PrivateRoute><Admin /></PrivateRoute>}
       />
     </Routes>
   );

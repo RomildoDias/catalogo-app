@@ -31,6 +31,13 @@ class LojistaResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LojistaUpdate(BaseModel):
+    nome: str | None = Field(None, max_length=120)
+    whatsapp: str | None = Field(None, max_length=20)
+    cor_primaria: str | None = Field(None, max_length=7)
+    logo_url: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
