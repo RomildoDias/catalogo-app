@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: catalogo-api
+    runtime: docker
+    repo: https://github.com/RomildoDias/catalogo-app
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: catalogo-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: SUPERADMIN_EMAIL
+        value: admin@catalogo.app
+      - key: SUPERADMIN_PASSWORD
+        value: admin123
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: catalogo-painel
+          property: url
+
+  - type: web
+    name: catalogo-painel
+    runtime: static
+    repo: https://github.com/RomildoDias/catalogo-app
+    buildCommand: cd frontend/painel && npm ci && npm run build
+    staticPublishPath: frontend/painel/dist
+    pullRequestPreviewsEnabled: true
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-XSS-Protection
+        value: "0"
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: catalogo-api
+          property: url
+
+databases:
+  - name: catalogo-db
+    databaseName: catalogo_app
+    ipAllowList: []

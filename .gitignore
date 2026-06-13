@@ -8,3 +8,6 @@ node_modules/
 dist/
 *.db
 .Python
+
+uploads/
+backend/uploads/

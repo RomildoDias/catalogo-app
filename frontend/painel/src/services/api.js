@@ -1,4 +1,4 @@
-const BASE = "";
+const BASE = import.meta.env.VITE_API_URL || "";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("token");
@@ -27,6 +27,27 @@ async function request(path, options = {}) {
   return data;
 }
 
+async function uploadRequest(path, file) {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("arquivo", file);
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+    return;
+  }
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(data?.detail || "Erro no upload");
+  return data;
+}
+
 export const api = {
   login: (email, senha) =>
     request("/auth/login", {
@@ -42,29 +63,9 @@ export const api = {
       body: JSON.stringify(dados),
     }),
 
-  uploadLogo: async (file) => {
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("arquivo", file);
-    const res = await fetch("/auth/me/logo", {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
-    if (res.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-      return;
-    }
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-    if (!res.ok) throw new Error(data?.detail || "Erro no upload");
-    return data;
-  },
+  uploadLogo: (file) => uploadRequest("/auth/me/logo", file),
 
-  removerLogo: () =>
-    request("/auth/me/logo", { method: "DELETE" }),
+  removerLogo: () => request("/auth/me/logo", { method: "DELETE" }),
 
   categorias: {
     listar: () => request("/categorias/"),
@@ -97,26 +98,7 @@ export const api = {
       request(`/produtos/${id}`, { method: "DELETE" }),
     toggleAtivo: (id) =>
       request(`/produtos/${id}/ativo`, { method: "PATCH" }),
-    uploadFoto: async (id, file) => {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("arquivo", file);
-      const res = await fetch(`/produtos/${id}/foto`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-        return;
-      }
-      const text = await res.text();
-      const data = text ? JSON.parse(text) : null;
-      if (!res.ok) throw new Error(data?.detail || "Erro no upload");
-      return data;
-    },
+    uploadFoto: (id, file) => uploadRequest(`/produtos/${id}/foto`, file),
     removerFoto: (id) =>
       request(`/produtos/${id}/foto`, { method: "DELETE" }),
   },
