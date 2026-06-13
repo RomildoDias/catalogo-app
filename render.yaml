@@ -22,10 +22,7 @@ services:
       - key: SUPERADMIN_PASSWORD
         value: admin123
       - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: catalogo-painel
-          property: url
+        value: https://catalogo-painel.onrender.com
 
   - type: web
     name: catalogo-painel
@@ -53,10 +50,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: catalogo-api
-          property: url
+        value: https://catalogo-api.onrender.com
 
 databases:
   - name: catalogo-db
