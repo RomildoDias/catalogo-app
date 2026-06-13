@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,7 @@ from app.dependencies import get_current_user
 from app.models.lojista import Lojista
 from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, LojistaUpdate, SenhaAlterar, TokenResponse
 from app.services.auth_service import autenticar, criar_lojista, criar_token, hash_senha, verificar_senha
+from app.services.upload_service import salvar_foto, remover_foto
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,6 +54,35 @@ async def atualizar_perfil(
     update_data = dados.model_dump(exclude_unset=True, exclude_none=True)
     for key, value in update_data.items():
         setattr(current_user, key, value)
+    await session.commit()
+    await session.refresh(current_user)
+    return LojistaResponse.model_validate(current_user)
+
+
+LOGO_FAKE_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
+
+@router.post("/me/logo", response_model=LojistaResponse)
+async def upload_logo(
+    arquivo: UploadFile,
+    current_user: Lojista = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    url = await salvar_foto(current_user.id, LOGO_FAKE_ID, arquivo)
+    remover_foto(current_user.logo_url)
+    current_user.logo_url = url
+    await session.commit()
+    await session.refresh(current_user)
+    return LojistaResponse.model_validate(current_user)
+
+
+@router.delete("/me/logo", response_model=LojistaResponse)
+async def remover_logo(
+    current_user: Lojista = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    remover_foto(current_user.logo_url)
+    current_user.logo_url = None
     await session.commit()
     await session.refresh(current_user)
     return LojistaResponse.model_validate(current_user)

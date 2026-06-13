@@ -42,6 +42,30 @@ export const api = {
       body: JSON.stringify(dados),
     }),
 
+  uploadLogo: async (file) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("arquivo", file);
+    const res = await fetch("/auth/me/logo", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+      return;
+    }
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!res.ok) throw new Error(data?.detail || "Erro no upload");
+    return data;
+  },
+
+  removerLogo: () =>
+    request("/auth/me/logo", { method: "DELETE" }),
+
   categorias: {
     listar: () => request("/categorias/"),
     criar: (nome) =>

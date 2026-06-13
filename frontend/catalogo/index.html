@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Confira nossos produtos!">
+  <meta property="og:title" content="Carregando...">
+  <meta property="og:description" content="Confira nossos produtos!">
+  <meta property="og:type" content="website">
   <title>Carregando...</title>
   <link rel="stylesheet" href="catalogo.css">
 </head>
@@ -14,9 +18,17 @@
     </div>
   </header>
 
+  <section id="hero-banner">
+    <div class="container">
+      <h2 id="hero-titulo">Bem-vindo à nossa loja!</h2>
+      <p id="hero-descricao">Confira nossos produtos e faça seu pedido pelo WhatsApp.</p>
+    </div>
+  </section>
+
   <main class="container">
     <section id="buscador">
-      <input type="text" id="busca" placeholder="Buscar produtos..." oninput="filtrar()">
+      <input type="text" id="busca" placeholder="Buscar produtos..." autocomplete="off">
+      <button id="search-clear" aria-label="Limpar busca">&times;</button>
     </section>
 
     <nav id="categorias"></nav>
@@ -25,20 +37,22 @@
       <p>Catálogo gratuito · AquaCatálogo</p>
     </section>
 
+    <section id="destaques"></section>
+
     <section id="produtos"></section>
   </main>
 
-  <div id="modal-detalhes" class="modal" style="display:none" onclick="fecharDetalhes(event)">
+  <div id="modal-detalhes" class="modal" style="display:none" onclick="fecharDetalhes(event)" role="dialog" aria-modal="true" aria-label="Detalhes do produto">
     <div class="modal-content" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="fecharDetalhes()">&times;</button>
+      <button class="modal-close" onclick="fecharDetalhes()" aria-label="Fechar">&times;</button>
       <div id="modal-body"></div>
     </div>
   </div>
 
   <footer>
     <div class="container">
-      <div style="text-align:center;margin-bottom:8px">
-        <span id="theme-toggle" onclick="toggleTheme()" style="display:inline-block;padding:8px 16px;border-radius:8px;border:1px solid var(--border,#ddd);background:var(--bg-card,#fff);color:var(--text,#333);font-size:14px;cursor:pointer;user-select:none">🌙 Tema escuro</span>
+      <div>
+        <span id="theme-toggle" onclick="toggleTheme()">🌙 Tema escuro</span>
       </div>
       <div id="social-links"></div>
       <a id="whatsapp-btn" href="#" target="_blank" class="btn-whatsapp">

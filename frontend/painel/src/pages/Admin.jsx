@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
+import usePageTitle from "../hooks/usePageTitle";
 
 export default function Admin() {
+  usePageTitle("Administração");
   const [lojistas, setLojistas] = useState([]);
   const [loading, setLoading] = useState(true);
 

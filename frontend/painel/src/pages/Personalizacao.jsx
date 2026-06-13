@@ -2,12 +2,17 @@ import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
+import usePageTitle from "../hooks/usePageTitle";
 
 export default function Personalizacao() {
+  usePageTitle("Personalizar");
   const { user, login } = useAuth();
   const [form, setForm] = useState({ nome: "", whatsapp: "", cor_primaria: "", instagram_url: "", mercado_livre_url: "" });
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -18,6 +23,9 @@ export default function Personalizacao() {
         instagram_url: user.instagram_url || "",
         mercado_livre_url: user.mercado_livre_url || "",
       });
+      if (user.logo_url) {
+        setLogoPreview(user.logo_url);
+      }
     }
   }, [user]);
 
@@ -36,12 +44,63 @@ export default function Personalizacao() {
     }
   };
 
+  const handleLogoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setUploadingLogo(true);
+    try {
+      const result = await api.uploadLogo(file);
+      localStorage.setItem("user", JSON.stringify(result));
+      setLogoPreview(result.logo_url);
+      setMsg("Logo atualizada!");
+    } catch (e) {
+      setMsg("Erro ao enviar logo: " + e.message);
+    } finally {
+      setUploadingLogo(false);
+      setLogoFile(null);
+    }
+  };
+
+  const removerLogo = async () => {
+    try {
+      const result = await api.removerLogo();
+      localStorage.setItem("user", JSON.stringify(result));
+      setLogoPreview(null);
+      setMsg("Logo removida");
+    } catch (e) {
+      setMsg("Erro: " + e.message);
+    }
+  };
+
   return (
     <Layout>
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Personalizar Loja</h2>
 
       <div className="bg-white rounded-lg shadow-sm p-6 max-w-lg">
         <form onSubmit={salvar} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Logo da Loja</label>
+            {logoPreview ? (
+              <div className="flex items-center gap-4 mb-3">
+                <img src={logoPreview} alt="Logo" className="w-20 h-20 rounded-lg object-contain border bg-gray-50" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer">
+                    {uploadingLogo ? "Enviando..." : "Trocar logo"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoSelect} hidden />
+                  </label>
+                  <button type="button" onClick={removerLogo} className="text-xs text-red-600 hover:text-red-800 text-left">
+                    Remover logo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <label className="block w-full border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-blue-500 text-sm text-gray-500 mb-3">
+                {uploadingLogo ? "Enviando..." : "Clique para selecionar logo"}
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoSelect} hidden />
+              </label>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Loja</label>
             <input

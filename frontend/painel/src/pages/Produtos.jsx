@@ -1,9 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
+import ConfirmDialog from "../components/ConfirmDialog";
+import usePageTitle from "../hooks/usePageTitle";
+
+function maskPreco(valor) {
+  const digits = valor.replace(/\D/g, "");
+  if (!digits) return "";
+  const centavos = digits.padStart(3, "0");
+  const int = centavos.slice(0, -2);
+  const dec = centavos.slice(-2);
+  const milhar = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return milhar + "," + dec;
+}
+
+function unmaskPreco(mask) {
+  if (!mask) return null;
+  const v = String(mask).replace(/\./g, "").replace(",", ".");
+  return parseFloat(v);
+}
 
 export default function Produtos() {
+  usePageTitle("Produtos");
   const { user } = useAuth();
   const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -16,6 +35,9 @@ export default function Produtos() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("nome");
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const showFeedback = (msg, tipo) => {
     setFeedback({ msg, tipo });
@@ -36,6 +58,20 @@ export default function Produtos() {
 
   useEffect(() => { carregar(); }, []);
 
+  const filtrados = useMemo(() => {
+    let lista = [...produtos];
+    if (search) {
+      const s = search.toLowerCase();
+      lista = lista.filter((p) => p.nome.toLowerCase().includes(s) || (p.descricao && p.descricao.toLowerCase().includes(s)));
+    }
+    lista.sort((a, b) => {
+      if (sortBy === "nome") return a.nome.localeCompare(b.nome);
+      if (sortBy === "preco") return (a.preco || 0) - (b.preco || 0);
+      return 0;
+    });
+    return lista;
+  }, [produtos, search, sortBy]);
+
   const abrirCriar = () => {
     setForm({ nome: "", descricao: "", preco: "", badge: "", categoria_id: "" });
     setEditId(null);
@@ -50,7 +86,7 @@ export default function Produtos() {
     setForm({
       nome: p.nome,
       descricao: p.descricao || "",
-      preco: p.preco || "",
+      preco: p.preco ? maskPreco(String(p.preco * 100)) : "",
       badge: p.badge || "",
       categoria_id: p.categoria_id || "",
     });
@@ -75,7 +111,7 @@ export default function Produtos() {
     try {
       const dados = { ...form };
       if (!dados.categoria_id) dados.categoria_id = null;
-      dados.preco = formatarPrecoParaEnvio(dados.preco);
+      dados.preco = unmaskPreco(dados.preco);
       let produto;
       if (editId) {
         await api.produtos.atualizar(editId, dados);
@@ -131,8 +167,8 @@ export default function Produtos() {
   };
 
   const deletar = async (id) => {
-    if (!confirm("Remover produto?")) return;
     try {
+      setConfirmDelete(null);
       await api.produtos.deletar(id);
       showFeedback("Produto removido", "sucesso");
       carregar();
@@ -150,18 +186,12 @@ export default function Produtos() {
     }
   };
 
-  function formatarPrecoParaEnvio(valor) {
-    if (!valor) return null;
-    var v = String(valor).replace(/\./g, "").replace(",", ".");
-    return parseFloat(v);
-  }
-
   const maxProdutos = user?.plano === "gratuito" ? 20 : Infinity;
   const ativosCount = produtos.filter((p) => p.ativo).length;
 
   const imagemPreview = previewUrl || currentFoto;
 
-  if (loading) return <Layout><p>Carregando...</p></Layout>;
+  if (loading) return <Layout><TableSkeleton /></Layout>;
 
   return (
     <Layout>
@@ -170,7 +200,7 @@ export default function Produtos() {
           {feedback.msg}
         </div>
       )}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">Produtos</h2>
           <p className="text-sm text-gray-500">
@@ -180,18 +210,40 @@ export default function Produtos() {
         <button
           onClick={abrirCriar}
           disabled={user?.plano === "gratuito" && ativosCount >= 20}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 self-start"
         >
           Novo Produto
         </button>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Buscar produtos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="nome">Ordenar: Nome</option>
+          <option value="preco">Ordenar: Preço</option>
+        </select>
+      </div>
+
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {produtos.length === 0 ? (
-          <p className="p-6 text-gray-500 text-center">Nenhum produto cadastrado</p>
+        {filtrados.length === 0 ? (
+          <p className="p-6 text-gray-500 text-center">
+            {search ? "Nenhum produto encontrado para essa busca." : "Nenhum produto cadastrado"}
+          </p>
         ) : (
           <div className="divide-y">
-            {produtos.map((p) => (
+            {filtrados.map((p) => (
               <div key={p.id} className="p-4 flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-100 rounded-md flex-shrink-0 overflow-hidden">
                   {p.foto_url ? (
@@ -229,7 +281,7 @@ export default function Produtos() {
                   <button onClick={() => abrirEditar(p)} className="text-sm text-blue-600 hover:text-blue-800">
                     Editar
                   </button>
-                  <button onClick={() => deletar(p.id)} className="text-sm text-red-600 hover:text-red-800">
+                  <button onClick={() => setConfirmDelete(p.id)} className="text-sm text-red-600 hover:text-red-800">
                     Remover
                   </button>
                 </div>
@@ -269,7 +321,7 @@ export default function Produtos() {
                   <input
                     type="text"
                     value={form.preco}
-                    onChange={(e) => setForm({ ...form, preco: e.target.value })}
+                    onChange={(e) => setForm({ ...form, preco: maskPreco(e.target.value) })}
                     placeholder="0,00"
                     className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -337,6 +389,35 @@ export default function Produtos() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remover produto"
+        message="Tem certeza que deseja remover este produto? Esta ação não pode ser desfeita."
+        onConfirm={() => deletar(confirmDelete)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Layout>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+      <div className="h-10 bg-gray-200 rounded w-full mb-4" />
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="divide-y">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-4 flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-200 rounded-md" />
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-48" />
+                <div className="h-3 bg-gray-200 rounded w-32 mt-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
