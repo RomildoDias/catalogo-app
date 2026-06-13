@@ -18,5 +18,8 @@ asyncio.run(init())
 echo "=== Running seed ==="
 python -m seed
 
+echo "=== Updating product details ==="
+python -m scripts.atualizar_produtos 2>/dev/null || echo "  (nada a atualizar)"
+
 echo "=== Starting server ==="
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
