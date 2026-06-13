@@ -11,7 +11,7 @@ from app.models.lojista import Lojista
 from app.schemas.lojista import LojistaCreate
 from app.services.slug_service import gerar_slug, slug_unica
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_senha(senha: str) -> str:
