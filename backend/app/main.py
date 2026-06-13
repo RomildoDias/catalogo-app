@@ -52,8 +52,13 @@ app.include_router(admin.router)
 app.include_router(lojistas.router)
 
 # Serve o catálogo público (HTML/JS/CSS vanilla)
-catalogo_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "catalogo"
-if catalogo_path.exists():
+catalogo_paths = [
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "catalogo",  # local dev
+    Path(__file__).resolve().parent.parent / "frontend" / "catalogo",         # docker
+    Path.cwd() / "frontend" / "catalogo",                                     # fallback
+]
+catalogo_path = next((p for p in catalogo_paths if p.exists()), None)
+if catalogo_path:
     app.mount("/catalogo", StaticFiles(directory=str(catalogo_path), html=True), name="catalogo")
 
 # Serve as imagens enviadas pelos lojistas
