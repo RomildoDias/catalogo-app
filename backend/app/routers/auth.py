@@ -1,4 +1,4 @@
-import uuid
+import base64
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy.exc import IntegrityError
@@ -9,7 +9,6 @@ from app.dependencies import get_current_user
 from app.models.lojista import Lojista
 from app.schemas.lojista import LojistaCreate, LojistaLogin, LojistaResponse, LojistaUpdate, SenhaAlterar, TokenResponse
 from app.services.auth_service import autenticar, criar_lojista, criar_token, hash_senha, verificar_senha
-from app.services.upload_service import salvar_foto, remover_foto
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,7 +58,13 @@ async def atualizar_perfil(
     return LojistaResponse.model_validate(current_user)
 
 
-LOGO_FAKE_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+ALLOWED_LOGO_TYPES = {"image/jpeg", "image/png", "image/webp"}
+LOGO_MAGIC = {
+    "image/jpeg": [b"\xff\xd8\xff", b"\xff\xd8\xff\xe0", b"\xff\xd8\xff\xe1"],
+    "image/png": [b"\x89PNG\r\n\x1a\n"],
+    "image/webp": [b"RIFF"],
+}
+MAX_LOGO_SIZE = 5 * 1024 * 1024
 
 
 @router.post("/me/logo", response_model=LojistaResponse)
@@ -68,9 +73,21 @@ async def upload_logo(
     current_user: Lojista = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
-    url = await salvar_foto(current_user.id, LOGO_FAKE_ID, arquivo)
-    remover_foto(current_user.logo_url)
-    current_user.logo_url = url
+    if arquivo.content_type not in ALLOWED_LOGO_TYPES:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Formato não permitido. Use JPG, PNG ou WebP.")
+
+    HEADER_SIZE = 32
+    header = await arquivo.read(HEADER_SIZE)
+    magic_list = LOGO_MAGIC.get(arquivo.content_type, [])
+    if not any(header[:len(magic)] == magic for magic in magic_list):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Conteúdo do arquivo não corresponde ao formato declarado.")
+
+    data = header + await arquivo.read()
+    if len(data) > MAX_LOGO_SIZE:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Imagem deve ter no máximo 5MB.")
+
+    b64 = base64.b64encode(data).decode()
+    current_user.logo_url = f"data:{arquivo.content_type};base64,{b64}"
     await session.commit()
     await session.refresh(current_user)
     return LojistaResponse.model_validate(current_user)
@@ -81,7 +98,6 @@ async def remover_logo(
     current_user: Lojista = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
-    remover_foto(current_user.logo_url)
     current_user.logo_url = None
     await session.commit()
     await session.refresh(current_user)
