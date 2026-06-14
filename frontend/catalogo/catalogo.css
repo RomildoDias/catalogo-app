@@ -70,22 +70,37 @@ body {
 header {
   background: var(--hero-bg);
   color: var(--hero-text);
-  padding: 20px 0 16px;
+  padding: 28px 0 22px;
   text-align: center;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
-header h1 {
-  font-size: 1.35rem;
-  font-weight: 700;
+header .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 #logo {
-  max-height: 60px;
-  margin-bottom: 6px;
+  max-height: 90px;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s;
+}
+
+#logo:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* Hero banner */
@@ -762,6 +777,18 @@ footer .container {
 
   .destaque-card {
     width: 140px;
+  }
+
+  header {
+    padding: 20px 0 16px;
+  }
+
+  #logo {
+    max-height: 64px;
+  }
+
+  header h1 {
+    font-size: 1.2rem;
   }
 
   #hero-banner {
