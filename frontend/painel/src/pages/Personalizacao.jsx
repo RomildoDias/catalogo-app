@@ -188,7 +188,7 @@ export default function Personalizacao() {
             Veja como sua loja aparece para os clientes.
           </p>
           <a
-            href={`/catalogo/?slug=${user?.slug}`}
+            href={`${import.meta.env.VITE_API_URL || ""}/catalogo/?slug=${user?.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
