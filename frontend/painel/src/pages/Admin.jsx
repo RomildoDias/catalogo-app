@@ -50,13 +50,19 @@ export default function Admin() {
     }
   };
 
+  const formPadrao = { nome: "", email: "", whatsapp: "", senha: "", plano: "gratuito" };
+
+  const fecharModal = () => {
+    setModal(false);
+    setForm(formPadrao);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSalvando(true);
     try {
       await api.admin.criarLojista(form);
-      setModal(false);
-      setForm({ nome: "", email: "", whatsapp: "", senha: "", plano: "gratuito" });
+      fecharModal();
       carregar();
       toast("Cliente cadastrado com sucesso!", "success");
     } catch (e) {
@@ -68,7 +74,7 @@ export default function Admin() {
 
   useEffect(() => {
     if (!modal) return;
-    const handler = (e) => { if (e.key === "Escape") setModal(false); };
+    const handler = (e) => { if (e.key === "Escape") { setModal(false); setForm(formPadrao); } };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [modal]);
@@ -149,7 +155,7 @@ export default function Admin() {
       </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setModal(false)} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={fecharModal} role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <div className="bg-slate-700 rounded-lg p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 id="modal-title" className="text-lg font-semibold text-white mb-4">Novo Cliente</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,13 +168,17 @@ export default function Admin() {
                   value={form.nome}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setForm((prev) => ({
-                      ...prev,
-                      nome: val,
-                      email: prev.email === slugEmail(prev.nome) + "@exemplo.com" || prev.email === ""
-                        ? (val.length >= 3 ? slugEmail(val) + "@exemplo.com" : "")
-                        : prev.email,
-                    }));
+                    setForm((prev) => {
+                      const autoEmail = slugEmail(prev.nome) + "@exemplo.com";
+                      const isAutoFilled = prev.email === autoEmail || prev.email === "";
+                      return {
+                        ...prev,
+                        nome: val,
+                        email: isAutoFilled && val.length > 0
+                          ? slugEmail(val) + "@exemplo.com"
+                          : isAutoFilled ? "" : prev.email,
+                      };
+                    });
                   }}
                   className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -222,7 +232,7 @@ export default function Admin() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setModal(false)}
+                  onClick={fecharModal}
                   className="px-4 py-2 text-sm text-slate-300 hover:text-white"
                 >
                   Cancelar
