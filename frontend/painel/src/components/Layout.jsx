@@ -26,7 +26,7 @@ const navItems = [
   { path: "/personalizacao", label: "Personalizar", icon: icons.personalizar },
 ];
 
-const adminItems = [{ path: "/admin", label: "Admin", icon: icons.admin }];
+const adminItems = [{ path: "/admin", label: "Clientes", icon: icons.admin }];
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();

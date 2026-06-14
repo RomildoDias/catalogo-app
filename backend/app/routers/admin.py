@@ -7,8 +7,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_superadmin
 from app.models.lojista import Lojista
+from app.schemas.lojista import LojistaCreate
+from app.services.auth_service import criar_lojista
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+@router.post("/lojistas", status_code=status.HTTP_201_CREATED)
+async def criar_lojista_admin(
+    dados: LojistaCreate,
+    current_user: Lojista = Depends(get_current_superadmin),
+    session: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.exc import IntegrityError
+    try:
+        lojista = await criar_lojista(dados, session)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email já cadastrado",
+        )
+    return {
+        "id": str(lojista.id),
+        "nome": lojista.nome,
+        "email": lojista.email,
+        "slug": lojista.slug,
+        "whatsapp": lojista.whatsapp,
+        "plano": lojista.plano,
+        "ativo": lojista.ativo,
+    }
 
 
 @router.get("/lojistas")

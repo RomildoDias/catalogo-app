@@ -105,6 +105,11 @@ export const api = {
 
   admin: {
     listarLojistas: () => request("/admin/lojistas"),
+    criarLojista: (dados) =>
+      request("/admin/lojistas", {
+        method: "POST",
+        body: JSON.stringify(dados),
+      }),
     toggleAtivo: (id) =>
       request(`/admin/lojistas/${id}/ativo`, { method: "PATCH" }),
     alterarPlano: (id, plano) =>

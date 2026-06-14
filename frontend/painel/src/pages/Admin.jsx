@@ -4,9 +4,12 @@ import Layout from "../components/Layout";
 import usePageTitle from "../hooks/usePageTitle";
 
 export default function Admin() {
-  usePageTitle("Administração");
+  usePageTitle("Clientes");
   const [lojistas, setLojistas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState({ nome: "", email: "", whatsapp: "", senha: "" });
 
   const carregar = async () => {
     try {
@@ -38,11 +41,34 @@ export default function Admin() {
     }
   };
 
-  if (loading) return <Layout><p>Carregando...</p></Layout>;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSalvando(true);
+    try {
+      await api.admin.criarLojista(form);
+      setModal(false);
+      setForm({ nome: "", email: "", whatsapp: "", senha: "" });
+      carregar();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  if (loading) return <Layout><p className="text-slate-400">Carregando...</p></Layout>;
 
   return (
     <Layout>
-      <h2 className="text-xl font-semibold text-white mb-6">Administração</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-white">Clientes</h2>
+        <button
+          onClick={() => setModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+        >
+          + Novo Cliente
+        </button>
+      </div>
 
       <div className="bg-slate-700 rounded-lg shadow-sm overflow-hidden border border-slate-600">
         <table className="w-full text-sm">
@@ -101,9 +127,76 @@ export default function Admin() {
           </tbody>
         </table>
         {lojistas.length === 0 && (
-          <p className="p-6 text-slate-400 text-center">Nenhum lojista cadastrado</p>
+          <p className="p-6 text-slate-400 text-center">Nenhum cliente cadastrado</p>
         )}
       </div>
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setModal(false)}>
+          <div className="bg-slate-700 rounded-lg p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-white mb-4">Novo Cliente</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Nome</label>
+                <input
+                  type="text"
+                  required
+                  value={form.nome}
+                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">WhatsApp</label>
+                <input
+                  type="tel"
+                  required
+                  value={form.whatsapp}
+                  onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Senha</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={form.senha}
+                  onChange={(e) => setForm({ ...form, senha: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModal(false)}
+                  className="px-4 py-2 text-sm text-slate-300 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={salvando}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {salvando ? "Salvando..." : "Cadastrar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
