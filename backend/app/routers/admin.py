@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_superadmin
 from app.models.lojista import Lojista
-from app.schemas.lojista import LojistaCreate
+from app.schemas.lojista import AdminLojistaCreate
 from app.services.auth_service import criar_lojista
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.post("/lojistas", status_code=status.HTTP_201_CREATED)
 async def criar_lojista_admin(
-    dados: LojistaCreate,
+    dados: AdminLojistaCreate,
     current_user: Lojista = Depends(get_current_superadmin),
     session: AsyncSession = Depends(get_db),
 ):
@@ -28,6 +28,9 @@ async def criar_lojista_admin(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email já cadastrado",
         )
+    if dados.plano != "gratuito":
+        lojista.plano = dados.plano
+        await session.commit()
     return {
         "id": str(lojista.id),
         "nome": lojista.nome,

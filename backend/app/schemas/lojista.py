@@ -34,6 +34,10 @@ class LojistaResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AdminLojistaCreate(LojistaCreate):
+    plano: str = "gratuito"
+
+
 class LojistaUpdate(BaseModel):
     nome: str | None = Field(None, max_length=120)
     whatsapp: str | None = Field(None, max_length=20)
