@@ -1,13 +1,13 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_superadmin
 from app.models.lojista import Lojista
-from app.schemas.lojista import AdminLojistaCreate
+from app.schemas.lojista import AdminLojistaCreate, AdminPlanoUpdate
 from app.services.auth_service import criar_lojista
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -88,16 +88,10 @@ async def toggle_ativo(
 @router.patch("/lojistas/{id}/plano")
 async def alterar_plano(
     id: str,
-    dados: dict,
+    dados: AdminPlanoUpdate,
     current_user: Lojista = Depends(get_current_superadmin),
     session: AsyncSession = Depends(get_db),
 ):
-    plano = dados.get("plano")
-    if plano not in ("gratuito", "pro"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Plano deve ser 'gratuito' ou 'pro'",
-        )
     try:
         lojista_id = uuid.UUID(id)
     except ValueError:
@@ -106,6 +100,6 @@ async def alterar_plano(
     lojista = result.scalar_one_or_none()
     if not lojista:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lojista não encontrado")
-    lojista.plano = plano
+    lojista.plano = dados.plano
     await session.commit()
     return {"id": id, "plano": lojista.plano}

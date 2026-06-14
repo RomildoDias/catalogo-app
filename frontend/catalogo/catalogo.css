@@ -60,6 +60,16 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -282,6 +292,8 @@ body.dark .skeleton {
   transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
   display: flex;
   flex-direction: column;
+  content-visibility: auto;
+  contain-intrinsic-size: 380px;
 }
 
 .produto-card:hover {

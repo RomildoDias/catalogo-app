@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -17,5 +18,12 @@ async def criar_lojista_endpoint(
     current_user: Lojista = Depends(get_current_superadmin),
     session: AsyncSession = Depends(get_db),
 ):
-    lojista = await criar_lojista(dados, session)
+    try:
+        lojista = await criar_lojista(dados, session)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email já cadastrado",
+        )
     return LojistaResponse.model_validate(lojista)

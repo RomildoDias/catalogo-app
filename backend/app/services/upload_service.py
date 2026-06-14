@@ -13,12 +13,32 @@ MAGIC_BYTES = {
 MAX_SIZE = 5 * 1024 * 1024
 
 
-def _validar_magic_bytes(data: bytes, content_type: str) -> bool:
+def validar_magic_bytes(data: bytes, content_type: str) -> bool:
     magic_list = MAGIC_BYTES.get(content_type, [])
     for magic in magic_list:
         if data[:len(magic)] == magic:
             return True
     return False
+
+
+def validar_arquivo(arquivo, content_type: str, max_size: int = MAX_SIZE) -> tuple[bytes, str]:
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        from fastapi import HTTPException, status
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Formato não permitido. Use JPG, PNG ou WebP.")
+
+    HEADER_SIZE = 32
+    header = arquivo.read(HEADER_SIZE)
+
+    if not validar_magic_bytes(header, content_type):
+        from fastapi import HTTPException, status
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Conteúdo do arquivo não corresponde ao formato declarado.")
+
+    data = header + arquivo.read()
+    if len(data) > max_size:
+        from fastapi import HTTPException, status
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Imagem deve ter no máximo 5MB.")
+
+    return data, ALLOWED_CONTENT_TYPES[content_type]
 
 
 async def salvar_foto(lojista_id: uuid.UUID, produto_id: uuid.UUID, arquivo: UploadFile) -> str:
@@ -31,7 +51,7 @@ async def salvar_foto(lojista_id: uuid.UUID, produto_id: uuid.UUID, arquivo: Upl
     HEADER_SIZE = 32
     header = await arquivo.read(HEADER_SIZE)
 
-    if not _validar_magic_bytes(header, arquivo.content_type):
+    if not validar_magic_bytes(header, arquivo.content_type):
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Conteúdo do arquivo não corresponde ao formato declarado.")
 
     # Lê o resto do arquivo

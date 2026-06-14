@@ -5,7 +5,9 @@ let buscaTimeout = null;
 function toggleTheme() {
   document.body.classList.toggle("dark");
   var el = document.getElementById("theme-toggle");
-  el.innerHTML = document.body.classList.contains("dark")
+  var isDark = document.body.classList.contains("dark");
+  el.setAttribute("aria-label", isDark ? "Alternar para tema claro" : "Alternar para tema escuro");
+  el.innerHTML = isDark
     ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Tema claro'
     : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Tema escuro';
   localStorage.setItem("tema", document.body.classList.contains("dark") ? "escuro" : "claro");
@@ -78,7 +80,7 @@ async function carregarLoja() {
   mostrarSkeletons();
   if (!slug) {
     produtosEl.innerHTML =
-      '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>Use /catalogo/?slug=nome-da-loja</p></div>';
+      '<div class="empty-state" role="alert"><div class="empty-state-icon">🔍</div><p>Use /catalogo/?slug=nome-da-loja</p></div>';
     return;
   }
   try {
@@ -88,7 +90,7 @@ async function carregarLoja() {
     renderizar();
   } catch (err) {
     produtosEl.innerHTML =
-      '<div class="empty-state"><div class="empty-state-icon">😕</div><p>' +
+      '<div class="empty-state" role="alert"><div class="empty-state-icon">😕</div><p>' +
       err.message +
       '</p></div>';
     document.getElementById("loja-nome").textContent = "Loja não encontrada";
@@ -116,7 +118,10 @@ function renderizar() {
   document.querySelector("header").style.setProperty("--hero-bg", heroBg);
   document.getElementById("hero-banner").style.setProperty("--hero-bg", heroBg);
 
+  var oldStyle = document.getElementById("dinamic-style");
+  if (oldStyle) oldStyle.remove();
   var style = document.createElement("style");
+  style.id = "dinamic-style";
   style.textContent =
     "#categorias button.ativa { background: " +
     loja.cor_primaria +
@@ -149,7 +154,7 @@ function renderizar() {
   document.getElementById("footer-copy").textContent = "\u00a9 " + new Date().getFullYear() + " " + loja.nome + " \u00b7 Todos os direitos reservados";
 
   var wppBtn = document.getElementById("whatsapp-btn");
-  wppBtn.href = "https://wa.me/55" + limparTelefone(loja.whatsapp);
+  wppBtn.href = "https://wa.me/" + limparTelefone(loja.whatsapp);
 
   var socialEl = document.getElementById("social-links");
   socialEl.innerHTML = "";
@@ -262,6 +267,7 @@ function aplicarFiltro() {
   if (produtos.length === 0) {
     var empty = document.createElement("div");
     empty.className = "empty-state";
+    empty.setAttribute("role", "alert");
     empty.innerHTML =
       '<div class="empty-state-icon">🔍</div><p>Nenhum produto encontrado</p>' +
       (busca || categoriaAtiva
@@ -337,7 +343,7 @@ function aplicarFiltro() {
 
     var wppLink = document.createElement("a");
     wppLink.className = "btn-comprar";
-    wppLink.href = "https://wa.me/55" + wpp + "?text=" + mensagemWhatsApp(p);
+    wppLink.href = "https://wa.me/" + wpp + "?text=" + mensagemWhatsApp(p);
     wppLink.target = "_blank";
     wppLink.textContent = "Comprar";
     actions.appendChild(wppLink);
@@ -443,7 +449,7 @@ function abrirDetalhes(index) {
 
   var wppLink = document.createElement("a");
   wppLink.className = "btn-whatsapp";
-  wppLink.href = "https://wa.me/55" + wpp + "?text=" + mensagemWhatsApp(produtoAtivo);
+  wppLink.href = "https://wa.me/" + wpp + "?text=" + mensagemWhatsApp(produtoAtivo);
   wppLink.target = "_blank";
   wppLink.textContent = "Comprar via WhatsApp";
   body.appendChild(wppLink);

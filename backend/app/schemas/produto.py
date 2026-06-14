@@ -7,17 +7,17 @@ from pydantic import BaseModel, Field
 
 class ProdutoCreate(BaseModel):
     categoria_id: str | None = None
-    nome: str = Field(..., max_length=120)
+    nome: str = Field(..., min_length=1, max_length=120)
     descricao: str | None = None
-    preco: Decimal | None = None
+    preco: Decimal | None = Field(None, ge=0)
     badge: str | None = Field(None, max_length=30)
 
 
 class ProdutoUpdate(BaseModel):
     categoria_id: str | None = None
-    nome: str | None = Field(None, max_length=120)
+    nome: str | None = Field(None, min_length=1, max_length=120)
     descricao: str | None = None
-    preco: Decimal | None = None
+    preco: Decimal | None = Field(None, ge=0)
     badge: str | None = Field(None, max_length=30)
     ativo: bool | None = None
 

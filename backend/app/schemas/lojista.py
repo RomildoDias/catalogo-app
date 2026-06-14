@@ -1,14 +1,16 @@
 import uuid
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
 
 
 class LojistaCreate(BaseModel):
-    nome: str = Field(..., max_length=120)
+    nome: str = Field(..., min_length=1, max_length=120)
     email: EmailStr
     whatsapp: str = Field(..., max_length=20)
-    senha: str = Field(..., min_length=6, max_length=128)
+    senha: str = Field(..., min_length=8, max_length=128)
 
 
 class LojistaLogin(BaseModel):
@@ -35,13 +37,17 @@ class LojistaResponse(BaseModel):
 
 
 class AdminLojistaCreate(LojistaCreate):
-    plano: str = "gratuito"
+    plano: Literal["gratuito", "pro"] = "gratuito"
+
+
+class AdminPlanoUpdate(BaseModel):
+    plano: Literal["gratuito", "pro"] = "gratuito"
 
 
 class LojistaUpdate(BaseModel):
-    nome: str | None = Field(None, max_length=120)
+    nome: str | None = Field(None, min_length=1, max_length=120)
     whatsapp: str | None = Field(None, max_length=20)
-    cor_primaria: str | None = Field(None, max_length=7)
+    cor_primaria: str | None = Field(None, max_length=7, pattern=r"^#[0-9a-fA-F]{6}$")
     logo_url: str | None = None
     instagram_url: str | None = None
     mercado_livre_url: str | None = None
@@ -55,4 +61,4 @@ class TokenResponse(BaseModel):
 
 class SenhaAlterar(BaseModel):
     senha_atual: str
-    nova_senha: str = Field(..., min_length=6, max_length=128)
+    nova_senha: str = Field(..., min_length=8, max_length=128)

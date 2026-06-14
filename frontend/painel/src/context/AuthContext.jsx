@@ -33,8 +33,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (data) => {
+    localStorage.setItem("user", JSON.stringify(data));
+    setUser(data);
+  };
+
+  const isSuperadmin = user?.email === "admin@catalogo.app";
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser, isSuperadmin }}>
       {children}
     </AuthContext.Provider>
   );

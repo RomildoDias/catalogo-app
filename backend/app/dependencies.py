@@ -34,8 +34,15 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido",
         )
+    try:
+        parsed_id = uuid.UUID(lojista_id)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido",
+        )
     result = await session.execute(
-        select(Lojista).where(Lojista.id == uuid.UUID(lojista_id))
+        select(Lojista).where(Lojista.id == parsed_id)
     )
     lojista = result.scalar_one_or_none()
     if not lojista or not lojista.ativo:

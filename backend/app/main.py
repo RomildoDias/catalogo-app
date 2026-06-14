@@ -28,7 +28,7 @@ app = FastAPI(title="CatálogoApp API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_url, "http://localhost:5173"],
-    allow_origin_regex=r"https://.*\.onrender\.com",
+    allow_origin_regex=r"^https://[a-z0-9-]+\.onrender\.com$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +72,7 @@ async def robots():
 
 @app.get("/health")
 async def health():
+    from datetime import datetime, timezone
     from app.database import async_session
     from sqlalchemy import text
     try:
@@ -80,4 +81,9 @@ async def health():
             db_ok = True
     except Exception:
         db_ok = False
-    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "error"}
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "database": "connected" if db_ok else "error",
+        "version": "0.1.0",
+        "uptime": datetime.now(timezone.utc).isoformat(),
+    }

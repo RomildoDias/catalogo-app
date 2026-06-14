@@ -5,47 +5,80 @@ async function request(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const fetchOptions = { ...options, headers, signal: controller.signal };
 
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-    return;
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, attempt * 1000));
+    }
+    try {
+      const res = await fetch(`${BASE}${path}`, fetchOptions);
+      clearTimeout(timeoutId);
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return;
+      }
+
+      if (res.status === 204) return null;
+
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        throw new Error(`Resposta inválida do servidor (${res.status})`);
+      }
+      if (!res.ok) throw new Error(data?.detail || "Erro na requisição");
+      return data;
+    } catch (err) {
+      lastError = err;
+      if (err.name === "AbortError") {
+        lastError = new Error("Tempo limite excedido. Verifique sua conexão.");
+      }
+      const isRetriable = err.name === "TypeError" || err.name === "AbortError" || (err.status >= 500);
+      if (!isRetriable || attempt === 2) break;
+    }
   }
-
-  if (res.status === 204) return null;
-
-  const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    throw new Error(`Resposta inválida do servidor (${res.status})`);
-  }
-  if (!res.ok) throw new Error(data?.detail || "Erro na requisição");
-  return data;
+  clearTimeout(timeoutId);
+  throw lastError;
 }
 
 async function uploadRequest(path, file) {
   const token = localStorage.getItem("token");
   const formData = new FormData();
   formData.append("arquivo", file);
-  const res = await fetch(`${BASE}${path}`, {
-    method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-    return;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+      return;
+    }
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : null;
+    if (!res.ok) throw new Error(data?.detail || "Erro no upload");
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
   }
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw new Error(data?.detail || "Erro no upload");
-  return data;
 }
 
 export const api = {

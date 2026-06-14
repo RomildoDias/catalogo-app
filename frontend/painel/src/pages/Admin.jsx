@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
 import usePageTitle from "../hooks/usePageTitle";
+import { toast } from "../components/Toast";
 
 function slugEmail(texto) {
   return texto
@@ -23,7 +24,7 @@ export default function Admin() {
     try {
       setLojistas(await api.admin.listarLojistas());
     } catch (e) {
-      alert(e.message);
+      toast(e.message, "error");
     } finally {
       setLoading(false);
     }
@@ -36,7 +37,7 @@ export default function Admin() {
       await api.admin.toggleAtivo(id);
       carregar();
     } catch (e) {
-      alert(e.message);
+      toast(e.message, "error");
     }
   };
 
@@ -45,7 +46,7 @@ export default function Admin() {
       await api.admin.alterarPlano(id, plano);
       carregar();
     } catch (e) {
-      alert(e.message);
+      toast(e.message, "error");
     }
   };
 
@@ -57,12 +58,20 @@ export default function Admin() {
       setModal(false);
       setForm({ nome: "", email: "", whatsapp: "", senha: "", plano: "gratuito" });
       carregar();
+      toast("Cliente cadastrado com sucesso!", "success");
     } catch (e) {
-      alert(e.message);
+      toast(e.message, "error");
     } finally {
       setSalvando(false);
     }
   };
+
+  useEffect(() => {
+    if (!modal) return;
+    const handler = (e) => { if (e.key === "Escape") setModal(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [modal]);
 
   if (loading) return <Layout><p className="text-slate-400">Carregando...</p></Layout>;
 
@@ -140,13 +149,14 @@ export default function Admin() {
       </div>
 
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setModal(false)} role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <div className="bg-slate-700 rounded-lg p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-white mb-4">Novo Cliente</h3>
+            <h3 id="modal-title" className="text-lg font-semibold text-white mb-4">Novo Cliente</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-300 mb-1">Nome</label>
+                <label htmlFor="admin-nome" className="block text-sm text-slate-300 mb-1">Nome</label>
                 <input
+                  id="admin-nome"
                   type="text"
                   required
                   value={form.nome}
@@ -164,8 +174,9 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-1">Email</label>
+                <label htmlFor="admin-email" className="block text-sm text-slate-300 mb-1">Email</label>
                 <input
+                  id="admin-email"
                   type="email"
                   required
                   value={form.email}
@@ -174,8 +185,9 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-1">WhatsApp</label>
+                <label htmlFor="admin-whatsapp" className="block text-sm text-slate-300 mb-1">WhatsApp</label>
                 <input
+                  id="admin-whatsapp"
                   type="tel"
                   required
                   value={form.whatsapp}
@@ -184,8 +196,9 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-1">Plano</label>
+                <label htmlFor="admin-plano" className="block text-sm text-slate-300 mb-1">Plano</label>
                 <select
+                  id="admin-plano"
                   value={form.plano}
                   onChange={(e) => setForm({ ...form, plano: e.target.value })}
                   className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -195,11 +208,12 @@ export default function Admin() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-1">Senha</label>
+                <label htmlFor="admin-senha" className="block text-sm text-slate-300 mb-1">Senha</label>
                 <input
+                  id="admin-senha"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={8}
                   value={form.senha}
                   onChange={(e) => setForm({ ...form, senha: e.target.value })}
                   className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

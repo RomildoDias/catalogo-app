@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -46,12 +46,11 @@ async def criar(
     current_user: Lojista = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
-    # Verificar limite de categorias no plano gratuito
     if current_user.plano == "gratuito":
         result = await session.execute(
-            select(Categoria).where(Categoria.lojista_id == current_user.id)
+            select(func.count(Categoria.id)).where(Categoria.lojista_id == current_user.id)
         )
-        if len(result.scalars().all()) >= 5:
+        if result.scalar() >= 5:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Plano gratuito permite até 5 categorias",

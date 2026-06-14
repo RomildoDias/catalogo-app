@@ -29,10 +29,8 @@ const navItems = [
 const adminItems = [{ path: "/admin", label: "Clientes", icon: icons.admin }];
 
 export default function Layout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isSuperadmin } = useAuth();
   const location = useLocation();
-
-  const isSuperadmin = user?.email === "admin@catalogo.app";
 
   return (
     <div className="min-h-screen bg-gray-100 flex">

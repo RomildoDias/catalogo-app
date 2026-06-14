@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models.lojista import Lojista
@@ -13,29 +14,19 @@ router = APIRouter(prefix="/loja", tags=["loja pública"])
 @router.get("/{slug}")
 async def dados_loja(slug: str, session: AsyncSession = Depends(get_db)):
     result = await session.execute(
-        select(Lojista).where(Lojista.slug == slug, Lojista.ativo.is_(True))
+        select(Lojista)
+        .options(selectinload(Lojista.categorias), selectinload(Lojista.produtos))
+        .where(Lojista.slug == slug, Lojista.ativo.is_(True))
     )
     lojista = result.scalar_one_or_none()
     if not lojista:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Loja não encontrada")
 
-    # Buscar categorias
-    cats_result = await session.execute(
-        select(Categoria)
-        .where(Categoria.lojista_id == lojista.id)
-        .order_by(Categoria.ordem)
-    )
     categorias = [
         {"id": str(c.id), "nome": c.nome, "ordem": c.ordem}
-        for c in cats_result.scalars().all()
+        for c in sorted(lojista.categorias, key=lambda x: x.ordem)
     ]
 
-    # Buscar produtos ativos
-    prods_result = await session.execute(
-        select(Produto)
-        .where(Produto.lojista_id == lojista.id, Produto.ativo.is_(True))
-        .order_by(Produto.ordem)
-    )
     produtos = [
         {
             "id": str(p.id),
@@ -46,7 +37,8 @@ async def dados_loja(slug: str, session: AsyncSession = Depends(get_db)):
             "foto_url": p.foto_url,
             "badge": p.badge,
         }
-        for p in prods_result.scalars().all()
+        for p in sorted(lojista.produtos, key=lambda x: x.ordem)
+        if p.ativo
     ]
 
     return {

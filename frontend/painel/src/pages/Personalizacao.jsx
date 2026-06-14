@@ -3,13 +3,13 @@ import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import usePageTitle from "../hooks/usePageTitle";
+import { toast } from "../components/Toast";
 
 export default function Personalizacao() {
   usePageTitle("Personalizar");
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   const [form, setForm] = useState({ nome: "", whatsapp: "", cor_primaria: "", instagram_url: "", mercado_livre_url: "" });
   const [salvando, setSalvando] = useState(false);
-  const [msg, setMsg] = useState("");
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -32,13 +32,12 @@ export default function Personalizacao() {
   const salvar = async (e) => {
     e.preventDefault();
     setSalvando(true);
-    setMsg("");
     try {
       const atualizado = await api.atualizarPerfil(form);
-      localStorage.setItem("user", JSON.stringify(atualizado));
-      setMsg("Salvo com sucesso!");
+      updateUser(atualizado);
+      toast("Salvo com sucesso!", "success");
     } catch (e) {
-      setMsg("Erro: " + e.message);
+      toast(e.message, "error");
     } finally {
       setSalvando(false);
     }
@@ -51,11 +50,11 @@ export default function Personalizacao() {
     setUploadingLogo(true);
     try {
       const result = await api.uploadLogo(file);
-      localStorage.setItem("user", JSON.stringify(result));
+      updateUser(result);
       setLogoPreview(result.logo_url);
-      setMsg("Logo atualizada!");
+      toast("Logo atualizada!", "success");
     } catch (e) {
-      setMsg("Erro ao enviar logo: " + e.message);
+      toast(e.message, "error");
     } finally {
       setUploadingLogo(false);
       setLogoFile(null);
@@ -65,11 +64,11 @@ export default function Personalizacao() {
   const removerLogo = async () => {
     try {
       const result = await api.removerLogo();
-      localStorage.setItem("user", JSON.stringify(result));
+      updateUser(result);
       setLogoPreview(null);
-      setMsg("Logo removida");
+      toast("Logo removida", "success");
     } catch (e) {
-      setMsg("Erro: " + e.message);
+      toast(e.message, "error");
     }
   };
 
@@ -168,11 +167,6 @@ export default function Personalizacao() {
               Plano: <strong className="capitalize">{user?.plano}</strong>
             </p>
           </div>
-          {msg && (
-            <p className={`text-sm ${msg.includes("Erro") ? "text-red-600" : "text-green-600"}`}>
-              {msg}
-            </p>
-          )}
           <button
             type="submit"
             disabled={salvando}

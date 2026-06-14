@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
 import usePageTitle from "../hooks/usePageTitle";
+import { toast } from "../components/Toast";
 
 export default function Dashboard() {
   usePageTitle("Dashboard");
@@ -14,10 +15,14 @@ export default function Dashboard() {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const [produtos, categorias] = await Promise.all([
+        const results = await Promise.allSettled([
           api.produtos.listar(),
           api.categorias.listar(),
         ]);
+        const produtos = results[0].status === "fulfilled" ? results[0].value : [];
+        const categorias = results[1].status === "fulfilled" ? results[1].value : [];
+        if (results[0].status === "rejected") toast("Erro ao carregar produtos", "error");
+        if (results[1].status === "rejected") toast("Erro ao carregar categorias", "error");
         setStats({
           totalProdutos: produtos.length,
           ativos: produtos.filter((p) => p.ativo).length,
@@ -28,8 +33,6 @@ export default function Dashboard() {
             .filter((p) => p.ativo)
             .slice(0, 5)
         );
-      } catch (e) {
-        console.error(e);
       } finally {
         setLoading(false);
       }
