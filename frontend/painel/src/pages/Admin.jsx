@@ -1,7 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "../services/api";
 import Layout from "../components/Layout";
 import usePageTitle from "../hooks/usePageTitle";
+
+function slugEmail(texto) {
+  return texto
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export default function Admin() {
   usePageTitle("Clientes");
@@ -9,7 +17,17 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const emailManual = useRef(false);
   const [form, setForm] = useState({ nome: "", email: "", whatsapp: "", senha: "", plano: "gratuito" });
+
+  useEffect(() => {
+    if (emailManual.current) return;
+    if (form.nome.length < 3) {
+      setForm((prev) => ({ ...prev, email: "" }));
+      return;
+    }
+    setForm((prev) => ({ ...prev, email: slugEmail(form.nome) + "@exemplo.com" }));
+  }, [form.nome]);
 
   const carregar = async () => {
     try {
@@ -63,7 +81,7 @@ export default function Admin() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-white">Clientes</h2>
         <button
-          onClick={() => setModal(true)}
+          onClick={() => { emailManual.current = false; setModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
         >
           + Novo Cliente
@@ -152,7 +170,7 @@ export default function Admin() {
                   type="email"
                   required
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) => { emailManual.current = true; setForm({ ...form, email: e.target.value }); }}
                   className="w-full px-3 py-2 rounded-md border border-slate-500 bg-slate-600 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
