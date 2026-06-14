@@ -48,12 +48,9 @@ async def get_current_user(
 
 async def get_current_superadmin(
     current_user: Lojista = Depends(get_current_user),
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> Lojista:
-    if not credentials:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token obrigatório")
-    payload = decodificar_token(credentials.credentials)
-    if not payload or payload.get("role") != "admin":
+    from app.config import settings
+    if current_user.email != settings.superadmin_email:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso restrito a administradores",
